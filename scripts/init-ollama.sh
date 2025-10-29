@@ -13,8 +13,8 @@ echo "Waiting for Ollama service to be ready..."
 max_retries=30
 retry_count=0
 
-# Try wget first (more likely to be available), fallback to checking if ollama responds
-until (wget --spider -q "$OLLAMA_HOST/api/tags" 2>/dev/null || ollama list >/dev/null 2>&1); do
+# Check if Ollama is ready using curl or ollama command
+until (curl -s "$OLLAMA_HOST/api/tags" >/dev/null 2>&1 || ollama list >/dev/null 2>&1); do
     retry_count=$((retry_count + 1))
     if [ $retry_count -gt $max_retries ]; then
         echo "ERROR: Ollama service did not become ready in time"
@@ -27,7 +27,7 @@ done
 echo "✓ Ollama service is ready"
 
 # Pull the required model
-MODEL_NAME="${OLLAMA_MODEL:-llama3.2:1b}"
+MODEL_NAME="${OLLAMA_MODEL:-llama3.1:latest}"
 echo ""
 echo "Pulling model: $MODEL_NAME"
 echo "This may take a few minutes on first run..."
