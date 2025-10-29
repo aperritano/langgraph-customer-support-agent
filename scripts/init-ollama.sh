@@ -26,7 +26,7 @@ done
 echo "✓ Ollama service is ready"
 
 # Pull the required model
-MODEL_NAME="${OLLAMA_MODEL:-llama3.2:3b}"
+MODEL_NAME="${OLLAMA_MODEL:-llama3.1:latest}"
 echo ""
 echo "Pulling model: $MODEL_NAME"
 echo "This may take a few minutes on first run..."

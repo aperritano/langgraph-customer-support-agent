@@ -5,6 +5,7 @@ A production-ready customer support agent built with LangGraph, featuring intell
 ## 🎉 What You Have
 
 A complete, production-ready customer support agent built with:
+
 - ✅ LangGraph for orchestration
 - ✅ Local LLM via Ollama (privacy-first)
 - ✅ 5 pre-built tools (order tracking, returns, KB search, etc.)
@@ -36,23 +37,26 @@ A complete, production-ready customer support agent built with:
 ### Step 1: Install Ollama (2 minutes)
 
 **macOS:**
+
 ```bash
 brew install ollama
 ollama serve
 ```
 
 **Linux:**
+
 ```bash
 curl -fsSL https://ollama.ai/install.sh | sh
 ollama serve
 ```
 
 **Windows:**
-Download from https://ollama.ai/download/windows
+Download from <https://ollama.ai/download/windows>
 
 **Pull the model:**
+
 ```bash
-ollama pull llama3.2:3b
+ollama pull llama3.1:latest
 ```
 
 ### Step 2: Setup Python Environment (1 minute)
@@ -75,21 +79,25 @@ pip install langgraph-cli
 ### Step 3: Run It! (30 seconds)
 
 **Option A: LangGraph Studio (Recommended)**
+
 ```bash
 langgraph dev
 ```
-Then open: http://127.0.0.1:8123
+
+Then open: <http://127.0.0.1:8123>
 
 **Option B: Agent UI Interface**
 
 The Agent UI provides an interactive chat interface for testing your agent. To use it:
 
 1. Start the LangGraph server:
+
 ```bash
 langgraph dev
 ```
 
 2. Open the Agent UI in your browser:
+
 ```
 http://localhost:8123
 ```
@@ -102,11 +110,13 @@ http://localhost:8123
 5. The UI shows tool calls and agent responses in real-time
 
 **Option C: Command Line**
+
 ```bash
 python scripts/cli.py
 ```
 
 **Option D: Run Tests**
+
 ```bash
 python scripts/test_bot.py
 ```
@@ -157,12 +167,14 @@ customer-support-bot/
 ### Key Files
 
 **agent.py** - The heart of the application
+
 - Defines the LangGraph workflow
 - Creates agent and tool nodes
 - Implements ReAct loop (reasoning + acting)
 - Exports `graph` variable for LangGraph Dev
 
 **tools.py** - Business logic
+
 - `search_knowledge_base()` - Find policies and FAQ using vector search
 - `get_order_status()` - Look up orders
 - `initiate_return()` - Process returns
@@ -170,15 +182,18 @@ customer-support-bot/
 - `escalate_to_human()` - Create support tickets
 
 **state.py** - Data schema
+
 - Defines `SupportState` TypedDict
 - Manages conversation history with `add_messages`
 
 **prompts.py** - Agent instructions
+
 - System prompt that guides agent behavior
 - Defines when to use tools
 - Sets tone and guidelines
 
 **vector_store.py** - Semantic search
+
 - Implements vector-based knowledge base search
 - Uses HuggingFace embeddings for semantic understanding
 - Provides intelligent document retrieval
@@ -200,11 +215,13 @@ Once running, try these example queries:
 The Agent UI provides an interactive web interface to chat with your customer support bot:
 
 1. **Start the LangGraph server**:
+
    ```bash
    langgraph dev
    ```
 
 2. **Open the Agent UI** in your browser:
+
    ```
    http://localhost:8123
    ```
@@ -232,7 +249,7 @@ The Agent UI provides an interactive web interface to chat with your customer su
 For advanced debugging and visualization:
 
 1. Start server: `langgraph dev`
-2. Open http://127.0.0.1:8123
+2. Open <http://127.0.0.1:8123>
 3. Type messages in the chat interface
 4. Watch tool calls happen in real-time
 5. Inspect state at each step
@@ -362,7 +379,8 @@ llm = ChatOllama(
 ```
 
 Available Ollama models:
-- `llama3.2:3b` - Fast, efficient (recommended)
+
+- `llama3.1:latest` - Fast, efficient (recommended)
 - `mistral:7b` - Good balance
 - `qwen2.5:7b` - Strong reasoning
 - `llama3.1:8b` - Larger, more capable
@@ -381,6 +399,7 @@ def __init__(self, embeddings_model: str = "sentence-transformers/all-mpnet-base
 ```
 
 Popular alternatives:
+
 - `all-mpnet-base-v2` - Higher quality, slower
 - `all-MiniLM-L12-v2` - Balance between speed and quality
 
@@ -548,10 +567,12 @@ def test_should_continue_with_tool_calls():
 ### Integration Tests
 
 Integration tests marked with `@pytest.mark.integration` test end-to-end flows and require:
+
 - Ollama running with llama3.1:latest model
 - Longer execution time
 
 Skip integration tests for quick development:
+
 ```bash
 pytest src/support_agent/tests/ -m "not integration"
 ```
@@ -585,10 +606,12 @@ The easiest way to get started! Everything is pre-configured and ready to run.
 ### Quick Start with Docker
 
 **Prerequisites:**
+
 - Docker and Docker Compose installed ([Get Docker](https://docs.docker.com/get-docker/))
 - That's it! No need to install Python, Ollama, or any dependencies manually
 
 **Start Everything:**
+
 ```bash
 # Clone the repository (if you haven't already)
 git clone <repository-url>
@@ -599,26 +622,31 @@ docker-compose up
 ```
 
 **What happens automatically:**
+
 1. ✅ Ollama service starts
-2. ✅ Downloads llama3.2:3b model (happens once, ~2GB)
+2. ✅ Downloads llama3.1:latest model (happens once, ~2GB)
 3. ✅ Support bot starts and connects to Ollama
-4. ✅ API ready at http://localhost:8123
+4. ✅ API ready at <http://localhost:8123>
 
 **Access the application:**
-- Agent UI Interface: http://localhost:8123
-- Ollama API: http://localhost:11434
+
+- Agent UI Interface: <http://localhost:8123>
+- Ollama API: <http://localhost:11434>
 
 ### Using Agent UI with Docker
 
 Once Docker is running, access the Agent UI interface:
 
 1. **Start the Docker containers**:
+
    ```bash
    docker-compose up
    ```
+
    Wait for the message: "Ollama initialization complete!"
 
 2. **Access the Agent UI** in your browser:
+
    ```
    http://localhost:8123
    ```
@@ -660,10 +688,10 @@ The setup includes three services:
 1. **ollama** - Ollama service for running LLMs
    - Automatically starts and stays healthy
    - Models stored in persistent volume
-   - Accessible at http://ollama:11434 (internal) and http://localhost:11434 (external)
+   - Accessible at <http://ollama:11434> (internal) and <http://localhost:11434> (external)
 
 2. **ollama-init** - One-time model initialization
-   - Automatically pulls llama3.2:3b model on first run
+   - Automatically pulls llama3.1:latest model on first run
    - Ensures model is ready before starting the bot
    - Exits after successful initialization
 
@@ -682,8 +710,9 @@ The setup includes three services:
 ✅ **Hot Reload** - Code changes automatically reload in the container
 
 The Docker setup automatically configures:
+
 - LangGraph server on port 8123
-- Ollama service with llama3.2:3b model pre-loaded
+- Ollama service with llama3.1:latest model pre-loaded
 - Persistent storage for conversation history
 - Network connectivity between all services
 - Volume mounts for live code editing
@@ -693,6 +722,7 @@ The Docker setup automatically configures:
 **Change the model:**
 
 Edit [docker-compose.yml](docker-compose.yml):
+
 ```yaml
 ollama-init:
   environment:
@@ -701,14 +731,16 @@ ollama-init:
 ```
 
 Available models:
+
 - `llama3.2:1b` - Smallest, fastest (~1GB RAM)
-- `llama3.2:3b` - Recommended, good balance (~3GB RAM)
+- `llama3.1:latest` - Recommended, good balance (~3GB RAM)
 - `mistral:7b` - More capable (~5GB RAM)
 - `llama3.1:8b` - Largest, most capable (~7GB RAM)
 
 **Development mode with hot reload:**
 
 The docker-compose.yml already mounts source directories:
+
 ```yaml
 volumes:
   - ./src:/app/src        # Code changes reload automatically
@@ -721,11 +753,13 @@ Just edit your code locally and it will reload automatically in the container!
 ### Troubleshooting Docker
 
 **Issue: Slow first startup**
+
 - This is normal! First run downloads the Ollama model (~2GB)
 - Subsequent starts are much faster (5-10 seconds)
 - Check progress: `docker-compose logs -f ollama-init`
 
 **Issue: Port already in use**
+
 ```bash
 # Change ports in docker-compose.yml
 services:
@@ -735,23 +769,26 @@ services:
 ```
 
 **Issue: Out of memory**
+
 - Ollama models need 4-8GB RAM available
 - Free up memory or use a smaller model (llama3.2:1b)
 - Check Docker Desktop settings to allocate more RAM
 
 **Issue: Model download fails**
+
 ```bash
 # Check internet connection and logs
 docker-compose logs ollama-init
 
 # Manually pull model
-docker-compose exec ollama ollama pull llama3.2:3b
+docker-compose exec ollama ollama pull llama3.1:latest
 
 # Restart services
 docker-compose restart
 ```
 
 **Issue: Container won't start**
+
 ```bash
 # Check container status
 docker-compose ps
@@ -765,6 +802,7 @@ docker-compose up --build
 ```
 
 **Issue: Changes not reflecting**
+
 ```bash
 # For Dockerfile changes, force rebuild:
 docker-compose down
@@ -777,6 +815,7 @@ docker-compose restart support-bot
 ```
 
 **Issue: Can't connect to Ollama**
+
 ```bash
 # Check if Ollama service is healthy
 docker-compose ps
@@ -797,6 +836,7 @@ docker-compose exec support-bot curl http://ollama:11434/api/tags
 **Error**: `requires-python = ">=3.11"`
 
 **Solution**:
+
 ```bash
 # Check your Python version
 python --version
@@ -816,6 +856,7 @@ sudo apt install python3.11
 **Error**: `ModuleNotFoundError: No module named 'langgraph'`
 
 **Solution**:
+
 ```bash
 # Make sure virtual environment is activated
 source venv/bin/activate  # macOS/Linux
@@ -830,6 +871,7 @@ pip install -r requirements.txt
 **Error**: `ModuleNotFoundError: No module named 'src'`
 
 **Solution**:
+
 ```bash
 # Make sure you're in the project root
 pwd  # Should show: .../customer-support-bot
@@ -848,6 +890,7 @@ python -m scripts.cli
 **Error**: `Connection refused` or `Failed to connect to Ollama`
 
 **Solution**:
+
 ```bash
 # Check if Ollama is running
 ollama list
@@ -861,12 +904,13 @@ brew services start ollama
 
 #### Model Not Found
 
-**Error**: `Model 'llama3.2:3b' not found`
+**Error**: `Model 'llama3.1:latest' not found`
 
 **Solution**:
+
 ```bash
 # Pull the model
-ollama pull llama3.2:3b
+ollama pull llama3.1:latest
 
 # Verify it's installed
 ollama list
@@ -879,6 +923,7 @@ ollama pull mistral:7b
 #### Ollama Running but Not Responding
 
 **Solution**:
+
 ```bash
 # Check Ollama logs
 tail -f ~/.ollama/logs/server.log
@@ -898,6 +943,7 @@ curl http://localhost:11434/api/tags
 **Error**: `Address already in use: 8123`
 
 **Solution**:
+
 ```bash
 # Option 1: Use different port
 langgraph dev --port 8124
@@ -916,6 +962,7 @@ taskkill /PID <PID> /F
 **Error**: `Graph 'support_agent' not found`
 
 **Solution**:
+
 ```bash
 # Verify langgraph.json is correct
 cat langgraph.json
@@ -932,6 +979,7 @@ python -c "from src.support_agent.agent import graph; print(graph)"
 **Issue**: Code changes not appearing in LangGraph Studio
 
 **Solution**:
+
 ```bash
 # LangGraph Dev auto-reloads, but if stuck:
 # 1. Stop server (Ctrl+C)
@@ -948,8 +996,9 @@ langgraph dev
 **Issue**: Bot responds without calling tools
 
 **Possible Causes**:
+
 1. **Ollama model doesn't support tool calling well**
-   - Solution: Use llama3.2:3b, mistral:7b, or qwen2.5:7b
+   - Solution: Use llama3.1:latest, mistral:7b, or qwen2.5:7b
    - These models have better tool calling support
 
 2. **System prompt unclear**
@@ -959,6 +1008,7 @@ langgraph dev
    - Check: `llm.bind_tools(tools)` in agent.py
 
 **Debug**:
+
 ```python
 # Test tool calling directly
 from src.support_agent.agent import llm
@@ -971,13 +1021,14 @@ print(result.tool_calls)  # Should not be empty
 **Issue**: Bot takes too long to respond
 
 **Solutions**:
+
 ```bash
 # 1. Use faster model
 # Edit src/support_agent/agent.py
-llm = ChatOllama(model="llama3.2:3b")  # Fastest
+llm = ChatOllama(model="llama3.1:latest")  # Fastest
 
 # 2. Check Ollama performance
-ollama run llama3.2:3b "Hello"  # Should be fast
+ollama run llama3.1:latest "Hello"  # Should be fast
 
 # 3. Reduce context
 # Limit conversation history if too long
@@ -993,6 +1044,7 @@ htop  # macOS/Linux
 **Issue**: Bot doesn't remember previous messages
 
 **Solution**:
+
 ```python
 # Check if checkpointer is configured
 # In agent.py, verify:
@@ -1011,6 +1063,7 @@ ls -lh storage/checkpoints.db
 **Issue**: Tools failing silently
 
 **Debug**:
+
 ```bash
 # Run with more logging
 export LANGCHAIN_VERBOSE=true
@@ -1030,6 +1083,7 @@ def my_tool(param: str) -> str:
 **Error**: `404 Not Found`
 
 **Solution**:
+
 ```bash
 # Check base URL
 curl http://localhost:8123/health
@@ -1047,6 +1101,7 @@ ps aux | grep langgraph
 **Error**: `500 Internal Server Error`
 
 **Solution**:
+
 ```bash
 # Check LangGraph Dev logs
 # They print to terminal where you ran 'langgraph dev'
@@ -1067,6 +1122,7 @@ curl -X POST http://localhost:8123/threads/test/runs \
 **Issue**: Can't stream responses
 
 **Solution**:
+
 ```python
 # Make sure to set stream_mode
 payload = {
@@ -1087,6 +1143,7 @@ for line in response.iter_lines():
 **Error**: `Container exits immediately`
 
 **Solution**:
+
 ```bash
 # Check logs
 docker logs support-bot
@@ -1106,6 +1163,7 @@ chmod -R 755 storage/
 #### Can't Connect to Ollama in Docker
 
 **Solution**:
+
 ```bash
 # Verify network
 docker network ls
@@ -1214,17 +1272,20 @@ Evaluate your agent's performance with automated testing that shows up in an onl
 #### Quick Start
 
 1. **Setup LangSmith**:
+
    ```bash
    export LANGCHAIN_API_KEY="your-key-from-smith.langchain.com"
    export LANGCHAIN_TRACING_V2=true
    ```
 
 2. **Check Setup**:
+
    ```bash
    python check_langsmith_setup.py
    ```
 
 3. **Run Evaluation**:
+
    ```bash
    python -m src.support_agent.tests.eval_langsmith
    ```
@@ -1233,10 +1294,11 @@ Evaluate your agent's performance with automated testing that shows up in an onl
 
 - **Dataset**: 10 test cases covering various customer scenarios
 - **Evaluators**: 3 automated metrics (tool usage, keyword presence, response quality)
-- **Online Dashboard**: View results at https://smith.langchain.com
+- **Online Dashboard**: View results at <https://smith.langchain.com>
 - **Traces**: Detailed execution traces for debugging
 
 Example output:
+
 ```
 Average Scores:
   - tool_usage          : 90.00%
@@ -1266,24 +1328,28 @@ Visualize the LangGraph workflow structure:
 ![LangGraph Customer Support Agent Workflow](langgraph-graph-mermaid.png)
 
 The diagram above shows the complete workflow of the customer support agent:
+
 - **Start** → **Agent**: Initial conversation begins
 - **Agent** → **End**: Agent can conclude the conversation
 - **Agent** → **Tools**: Agent can call support tools when needed
 - **Tools** → **Agent**: Tools return results back to agent for further processing
 
 This creates a flexible ReAct (Reasoning + Acting) loop where the agent can:
+
 1. Analyze customer messages
 2. Decide whether to use tools
 3. Process tool results
 4. Provide final responses or continue the conversation
 
 **Option A: Jupyter Notebook (Recommended)**
+
 ```bash
 # Open the visualization notebook
 jupyter notebook notebooks/graph_visualization.ipynb
 ```
 
 **Option B: Python Script**
+
 ```bash
 # Run the visualization script
 python scripts/visualize_graph.py
@@ -1293,6 +1359,7 @@ python scripts/test_graph_viz.py
 ```
 
 **Option C: Direct Code**
+
 ```python
 from IPython.display import Image, display
 from src.support_agent.agent import graph
@@ -1305,6 +1372,7 @@ except Exception:
 ```
 
 **Required Dependencies for Visualization:**
+
 ```bash
 pip install ipython pillow
 pip install 'langgraph[visualization]'
@@ -1313,6 +1381,7 @@ pip install 'langgraph[visualization]'
 ### Debugging
 
 Use LangGraph Studio to:
+
 - Set breakpoints on nodes
 - Step through execution
 - Inspect state at any point
@@ -1321,6 +1390,7 @@ Use LangGraph Studio to:
 ### Code Style
 
 We use:
+
 - **Black** for formatting: `black src/`
 - **Ruff** for linting: `ruff check src/`
 - **Type hints** where possible
@@ -1401,12 +1471,14 @@ Still stuck? Try these resources:
    - [Ollama Docs](https://ollama.ai/docs)
 
 2. **Enable Debug Logging**
+
    ```python
    import logging
    logging.basicConfig(level=logging.DEBUG)
    ```
 
 3. **Run with Verbose Mode**
+
    ```bash
    export LANGCHAIN_VERBOSE=true
    export LANGCHAIN_TRACING_V2=true
@@ -1441,6 +1513,7 @@ MIT License - Feel free to use and modify!
 ## Support
 
 For issues or questions:
+
 - Check the [LangGraph docs](https://langchain-ai.github.io/langgraph/)
 - Open an issue on GitHub
 - Review example conversations in `scripts/test_bot.py`
@@ -1469,7 +1542,7 @@ python scripts/init_vector_store.py
 pip install -r requirements.txt
 
 # Get Ollama model
-ollama pull llama3.2:3b
+ollama pull llama3.1:latest
 ```
 
 Happy coding! 🚀
