@@ -80,10 +80,10 @@ curl http://localhost:11434/api/version
 
 ### Step 3: Pull the Required Model
 
-Pull the `llama3.2:1b` model (recommended for fast CPU/GPU inference):
+Pull the `llama3.1:latest` model (recommended for fast CPU/GPU inference):
 
 ```bash
-ollama pull llama3.2:1b
+ollama pull llama3.1:latest
 ```
 
 This will download ~1.3GB the first time. The model will be stored locally and reused.
@@ -92,10 +92,38 @@ This will download ~1.3GB the first time. The model will be stored locally and r
 
 ```bash
 ollama list
-# Should show: llama3.2:1b
+# Should show: llama3.1:latest
 ```
 
-### Step 4: Build Docker Image (One-Time)
+### Step 4: Configure Environment Variables
+
+Create a `.env` file in the project root with the following required variables:
+
+```bash
+# Required: Ollama Configuration
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Required: Model Configuration  
+MODEL_NAME=llama3.1:latest
+
+# Required for LangSmith evaluation and tracing
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY=your_api_key_here
+LANGSMITH_PROJECT=focused-io-test
+LANGCHAIN_TRACING_V2=true
+
+# LangGraph Configuration
+LANGGRAPH_URL=http://localhost:2024
+```
+
+**Get your LangSmith API key:**
+1. Sign up at [https://smith.langchain.com](https://smith.langchain.com)
+2. Go to Settings → API Keys
+3. Copy your API key and replace `your_api_key_here` above
+
+**Note:** For Docker setups, these variables can be set in `docker-compose.yml` or via a `.env` file (Docker Compose automatically loads `.env` files).
+
+### Step 5: Build Docker Image (One-Time)
 
 Build the LangGraph agent Docker image:
 
@@ -108,6 +136,9 @@ python3.12 -m venv .venv
 # Activate it
 source .venv/bin/activate  # macOS/Linux
 # OR: .venv\Scripts\activate  # Windows
+
+#install all packages
+pip install -r requirements.txt
 ```
 
 **Build the Docker image:**
@@ -131,7 +162,7 @@ This will:
 pip install langgraph-cli
 ```
 
-### Step 5: Start the Docker Container
+### Step 6: Start the Docker Container
 
 **Ensure Docker is running** (check Docker Desktop is started)
 
@@ -154,7 +185,7 @@ This will:
 - ✅ Enable hot reload (edit `src/` files and see changes)
 - ✅ Expose the agent at `http://localhost:8123`
 
-### Step 6: Access the Application
+### Step 7: Access the Application
 
 **Wait for the server to start** (check logs show "Server started"):
 
@@ -165,14 +196,14 @@ docker-compose logs -f support-bot
 
 Open your browser and navigate to:
 
-- **Agent UI / LangGraph Studio**: <http://localhost:8123>
+- **Agent UI / LangGraph Studio**: https://agentchat.vercel.app/ (LangChain Agent UI)
 - **API Documentation**: <http://localhost:8123/docs> (Swagger UI)
 - **Native Ollama API**: <http://localhost:11434> (if you need to check status)
 
 **Note:** The server logs will show a Studio URL like:
 
 ```plaintext
-Studio UI: https://smith.langchain.com/studio/?baseUrl=http://0.0.0.0:8123
+Studio UI: https://smith.langchain.com/studio/?baseUrl=http://localhost:8123
 ```
 
 Use `http://localhost:8123` instead of `http://0.0.0.0:8123` when configuring (they're equivalent, but localhost is clearer).
@@ -310,12 +341,12 @@ docker-compose restart support-bot
 
 ### Model Not Found
 
-**Error:** `model 'llama3.2:1b' not found`
+**Error:** `model 'llama3.1:latest' not found`
 
 **Solution:**
 
 ```bash
-ollama pull llama3.2:1b
+ollama pull llama3.1:latest
 ```
 
 ### Slow Performance
@@ -332,7 +363,7 @@ ollama pull llama3.2:1b
 
 **On CPU-only systems:**
 
-- `llama3.2:1b` is optimized for CPU inference
+- `llama3.1:latest` is optimized for CPU inference
 - Expect 5-30 second responses (still much better than larger models)
 
 ### Docker Container Can't Reach Ollama
@@ -356,6 +387,22 @@ environment:
 ---
 
 ## Configuration
+
+### Environment Variables
+
+The following environment variables are required:
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `OLLAMA_BASE_URL` | Yes | URL where Ollama service is running | `http://localhost:11434` |
+| `MODEL_NAME` | Yes | The Ollama model to use | `llama3.1:latest` |
+| `LANGSMITH_ENDPOINT` | Yes* | LangSmith API endpoint | `https://api.smith.langchain.com` |
+| `LANGSMITH_API_KEY` | Yes* | Your LangSmith API key | None |
+| `LANGSMITH_PROJECT` | Yes* | LangSmith project name | `focused-io-test` |
+| `LANGCHAIN_TRACING_V2` | Yes* | Enable tracing to LangSmith | `true` |
+| `LANGGRAPH_URL` | Yes | LangGraph URL | `http://localhost:2024` |
+
+*Required for LangSmith evaluation and tracing features. Can be omitted if not using those features.
 
 ### Using a Different Model
 
@@ -411,8 +458,8 @@ curl http://localhost:11434/api/version
 # Expected: {"version":"..."}
 
 # 2. Check model is available
-ollama list | grep llama3.2:1b
-# Expected: llama3.2:1b in the list
+ollama list | grep llama3.1:latest
+# Expected: llama3.1:latest in the list
 
 # 3. Check Docker container is running
 docker-compose ps
@@ -438,7 +485,7 @@ If all checks pass, you're ready to use the Agent UI!
 ## Summary
 
 ✅ **Install Ollama natively** → Get GPU acceleration  
-✅ **Pull `llama3.2:1b` model** → Fast, efficient inference  
+✅ **Pull `llama3.1:latest` model** → Fast, efficient inference  
 ✅ **Start native Ollama** → `ollama serve` (runs in background)  
 ✅ **Build Docker image** → `langgraph build -t customer-support-bot:latest`  
 ✅ **Start container** → `docker-compose up`  
@@ -446,3 +493,5 @@ If all checks pass, you're ready to use the Agent UI!
 ✅ **Develop!** → Edit `src/`, changes auto-reload  
 
 **Your agent is ready at:** <http://localhost:8123>
+
+#folder

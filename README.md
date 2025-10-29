@@ -24,7 +24,7 @@ When a customer reaches out with a question, the agent springs into action. It s
 The system architecture reflects real-world production considerations:
 
 - **Knowledge Layer**: Vector database for policy documents and mock customer data stores
-- **Intelligence Layer**: Powered by Ollama's `llama3.2:1b` model for local, cost-effective inference
+- **Intelligence Layer**: Powered by Ollama's `llama3.1:latest` model for local, cost-effective inference
 - **Interface Layer**: LangChain Studio and Agent UI provide a streaming chat experience
 - **Quality Assurance**: Comprehensive TDD tests ensure reliability
 - **Deployment**: Docker configuration for consistent environments across development and production
@@ -128,10 +128,10 @@ Download from <https://ollama.ai/download/windows>
 **Pull the model:**
 
 ```bash
-ollama pull llama3.2:1b
+ollama pull llama3.1:latest
 ```
 
-### Step 2: Setup Python Environment (1 minute)
+### Step 2: Setup Python Environment and Environment Variables (2 minutes)
 
 ```bash
 cd langgraph-customer-support-agent
@@ -147,6 +147,34 @@ source .venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 pip install langgraph-cli
 ```
+
+**Configure Environment Variables:**
+
+Create a `.env` file in the project root with the following variables:
+
+```bash
+# Required: Ollama Configuration
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Required: Model Configuration
+MODEL_NAME=llama3.1:latest
+
+# Required for LangSmith evaluation and tracing
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY=your_api_key_here
+LANGSMITH_PROJECT=focused-io-test
+LANGCHAIN_TRACING_V2=true
+
+# LangGraph Configuration
+LANGGRAPH_URL=http://localhost:2024
+```
+
+**Get your LangSmith API key:**
+1. Sign up at [https://smith.langchain.com](https://smith.langchain.com)
+2. Go to Settings → API Keys
+3. Copy your API key and replace `your_api_key_here` above
+
+**Note:** If you're using Docker, these environment variables can also be set in `docker-compose.yml` or passed via `.env` file (Docker Compose automatically loads `.env` files).
 
 ### Step 3: Run It! (30 seconds)
 
@@ -192,6 +220,46 @@ python scripts/cli.py
 ```bash
 python scripts/test_bot.py
 ```
+
+## ⚙️ Environment Variables
+
+Before running the agent, you need to configure environment variables. Create a `.env` file in the project root:
+
+```bash
+# Required: Ollama Configuration
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Required: Model Configuration
+MODEL_NAME=llama3.1:latest
+
+# Required for LangSmith evaluation and tracing
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+LANGSMITH_API_KEY=your_api_key_here
+LANGSMITH_PROJECT=focused-io-test
+LANGCHAIN_TRACING_V2=true
+
+# LangGraph Configuration
+LANGGRAPH_URL=http://localhost:2024
+```
+
+### Environment Variable Reference
+
+| Variable | Required | Description | Default |
+|----------|----------|-------------|---------|
+| `OLLAMA_BASE_URL` | Yes | URL where Ollama service is running | `http://localhost:11434` |
+| `MODEL_NAME` | Yes | The Ollama model to use | `llama3.1:latest` |
+| `LANGSMITH_ENDPOINT` | Yes* | LangSmith API endpoint | `https://api.smith.langchain.com` |
+| `LANGSMITH_API_KEY` | Yes* | Your LangSmith API key | None |
+| `LANGSMITH_PROJECT` | Yes* | LangSmith project name | `focused-io-test` |
+| `LANGCHAIN_TRACING_V2` | Yes* | Enable tracing to LangSmith | `true` |
+| `LANGGRAPH_URL` | Yes | LangGraph URL | `http://localhost:2024` |
+
+*Required for LangSmith evaluation and tracing features. Can be omitted if not using those features.
+
+**Getting your LangSmith API key:**
+1. Sign up at [https://smith.langchain.com](https://smith.langchain.com)
+2. Go to Settings → API Keys
+3. Copy your API key and replace `your_api_key_here` in your `.env` file
 
 ## 📁 Project Structure
 
@@ -459,7 +527,7 @@ def test_should_continue_with_tool_calls():
 
 Integration tests marked with `@pytest.mark.integration` test end-to-end flows and require:
 
-- Ollama running with llama3.2:1b model
+- Ollama running with llama3.1:latest model
 - Longer execution time
 
 Skip integration tests for quick development:
@@ -701,14 +769,14 @@ Edit `src/support_agent/agent.py`:
 
 ```python
 llm = ChatOllama(
-    model="mistral:7b",  # Change this
+    model="llama3.1:latest",  # Change this
     temperature=0.3,      # Adjust creativity (0-1)
 )
 ```
 
 Available Ollama models:
 
-- `llama3.2:1b` - Fast, efficient (recommended)
+- `llama3.1:latest` - Fast, efficient (recommended)
 - `mistral:7b` - Good balance
 - `qwen2.5:7b` - Strong reasoning
 - `llama3.1:8b` - Larger, more capable
@@ -806,7 +874,7 @@ docker-compose up
 **What happens automatically:**
 
 1. ✅ Ollama service starts
-2. ✅ Downloads llama3.2:1b model (happens once, ~2GB)
+2. ✅ Downloads llama3.1:latest model (happens once, ~2GB)
 3. ✅ Support bot starts and connects to Ollama
 4. ✅ API ready at <http://localhost:8123>
 
@@ -860,7 +928,7 @@ docker-compose down -v
 docker-compose up --build
 
 # Use a different model
-OLLAMA_MODEL=mistral:7b docker-compose up
+OLLAMA_MODEL=llama3.1:latest docker-compose up
 ```
 
 ### Docker Architecture
@@ -873,7 +941,7 @@ The setup includes three services:
    - Accessible at <http://ollama:11434> (internal) and <http://localhost:11434> (external)
 
 2. **ollama-init** - One-time model initialization
-   - Automatically pulls llama3.2:1b model on first run
+   - Automatically pulls llama3.1:latest model on first run
    - Ensures model is ready before starting the bot
    - Exits after successful initialization
 
@@ -894,7 +962,7 @@ The setup includes three services:
 The Docker setup automatically configures:
 
 - LangGraph server on port 8123
-- Ollama service with llama3.2:1b model pre-loaded
+- Ollama service with llama3.1:latest model pre-loaded
 - Persistent storage for conversation history
 - Network connectivity between all services
 - Volume mounts for live code editing
@@ -909,15 +977,15 @@ Edit [docker-compose.yml](docker-compose.yml):
 ollama-init:
   environment:
     - OLLAMA_HOST=http://ollama:11434
-    - OLLAMA_MODEL=mistral:7b  # Change this line
+    - OLLAMA_MODEL=llama3.1:latest  # Change this line
 ```
 
 Available models:
 
-- `llama3.2:1b` - Smallest, fastest (~1GB RAM)
-- `llama3.2:1b` - Recommended, good balance (~3GB RAM)
+- `llama3.1:latest` - Recommended, fast, efficient (~1GB RAM)
 - `mistral:7b` - More capable (~5GB RAM)
-- `llama3.1:8b` - Largest, most capable (~7GB RAM)
+- `qwen2.5:7b` - Strong reasoning (~5GB RAM)
+- `llama3.1:8b` - Larger, most capable (~7GB RAM)
 
 **Development mode with hot reload:**
 
@@ -953,7 +1021,7 @@ services:
 **Issue: Out of memory**
 
 - Ollama models need 4-8GB RAM available
-- Free up memory or use a smaller model (llama3.2:1b)
+- Free up memory or use a smaller model (llama3.1:latest)
 - Check Docker Desktop settings to allocate more RAM
 
 **Issue: Model download fails**
@@ -963,7 +1031,7 @@ services:
 docker-compose logs ollama-init
 
 # Manually pull model
-docker-compose exec ollama ollama pull llama3.2:1b
+docker-compose exec ollama ollama pull llama3.1:latest
 
 # Restart services
 docker-compose restart
@@ -1087,19 +1155,19 @@ brew services start ollama
 
 #### Model Not Found
 
-**Error**: `Model 'llama3.2:1b' not found`
+**Error**: `Model 'llama3.1:latest' not found`
 
 **Solution**:
 
 ```bash
 # Pull the model
-ollama pull llama3.2:1b
+ollama pull llama3.1:latest
 
 # Verify it's installed
 ollama list
 
 # If you want a different model
-ollama pull mistral:7b
+ollama pull llama3.1:latest
 # Then update src/support_agent/agent.py
 ```
 
@@ -1181,7 +1249,7 @@ langgraph dev
 **Possible Causes**:
 
 1. **Ollama model doesn't support tool calling well**
-   - Solution: Use llama3.2:1b, mistral:7b, or qwen2.5:7b
+   - Solution: Use llama3.1:latest, mistral:7b, or qwen2.5:7b
    - These models have better tool calling support
 
 2. **System prompt unclear**
@@ -1208,10 +1276,10 @@ print(result.tool_calls)  # Should not be empty
 ```bash
 # 1. Use faster model
 # Edit src/support_agent/agent.py
-llm = ChatOllama(model="llama3.2:1b")  # Fastest
+llm = ChatOllama(model="llama3.1:latest")  # Fastest
 
 # 2. Check Ollama performance
-ollama run llama3.2:1b "Hello"  # Should be fast
+ollama run llama3.1:latest "Hello"  # Should be fast
 
 # 3. Reduce context
 # Limit conversation history if too long
@@ -1325,7 +1393,7 @@ for line in response.iter_lines():
 
 ```python
 # Use smaller model
-llm = ChatOllama(model="llama3.2:1b")
+llm = ChatOllama(model="llama3.1:latest")
 
 # Limit conversation history
 def agent_node(state: SupportState) -> dict:
@@ -1589,7 +1657,7 @@ python scripts/init_vector_store.py
 pip install -r requirements.txt
 
 # Get Ollama model
-ollama pull llama3.2:1b
+ollama pull llama3.1:latest
 ```
 
 Happy coding! 🚀
