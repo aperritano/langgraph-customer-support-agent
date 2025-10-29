@@ -1,4 +1,27 @@
-"""Customer support tools using @tool decorator."""
+"""Customer support tools using @tool decorator.
+
+WHAT THIS FILE DOES:
+Defines all the "actions" the agent can take to help customers. These are functions
+that the AI can call when it needs to do something like check order status, search
+the knowledge base, or initiate a return.
+
+WHY IT'S IMPORTANT:
+Tools give the agent capabilities beyond just talking. Without tools, the agent
+could only provide generic answers. With tools, it can:
+- Look up real information (order status, product availability)
+- Perform actions (initiate returns, escalate to humans)
+- Search knowledge bases for accurate policy information
+
+Think of tools like the buttons on a remote control - they're the actual actions
+the agent can take, not just words it can say.
+
+HOW TOOLS WORK:
+1. Each function is decorated with @tool (from LangChain)
+2. The decorator automatically creates a tool description that the LLM can read
+3. When the agent decides to use a tool, LangGraph calls the function
+4. The function returns a string result that gets added to the conversation
+5. The agent then uses this result to formulate its response to the customer
+"""
 
 from langchain_core.tools import tool
 from datetime import datetime, timedelta
@@ -8,6 +31,10 @@ from .vector_store import get_vector_store
 
 
 # Mock data - in production, replace with real database/API calls
+# WHAT: Sample order and inventory data for testing/demo purposes
+# WHY: In a real system, these would be database queries or API calls to your
+#      order management system and inventory system. For demo/development, we use
+#      hardcoded data so the tools work without setting up external services.
 MOCK_ORDERS = {
     "123456": {
         "status": "in_transit",
@@ -39,7 +66,24 @@ MOCK_INVENTORY = {
 
 @tool
 def search_knowledge_base(query: str, category: str = "general") -> str:
-    """Search the store's knowledge base for information about policies, products, and FAQ.
+    """
+    Search the store's knowledge base for information about policies, products, and FAQ.
+    
+    WHAT IT DOES:
+    Searches the vector store (semantic search) to find relevant information based on
+    the customer's question. This is like searching a company's internal wiki or FAQ.
+    
+    WHY IT'S IMPORTANT:
+    Instead of hardcoding policies in the prompt (which would make them hard to update),
+    this tool allows the agent to search a searchable knowledge base. When policies change,
+    you only update the knowledge base, not the code. Also enables more accurate, specific
+    answers since it searches the actual content rather than relying on the LLM's training data.
+    
+    HOW IT WORKS:
+    1. Takes the customer's question (query) and optional category filter
+    2. Calls the vector store's search function (semantic similarity search)
+    3. Returns formatted results from the knowledge base
+    4. Agent uses these results to answer the customer's question
 
     Use this tool to find answers about:
     - Store policies (returns, shipping, warranties)
@@ -71,7 +115,24 @@ def search_knowledge_base(query: str, category: str = "general") -> str:
 
 @tool
 def get_order_status(order_id: str) -> str:
-    """Look up the current status and tracking information for a customer's order.
+    """
+    Look up the current status and tracking information for a customer's order.
+    
+    WHAT IT DOES:
+    Queries the order management system (currently mock data) to get the current status
+    of a customer's order, including tracking information, delivery dates, and items.
+
+    WHY IT'S IMPORTANT:
+    Customers frequently ask "Where is my order?" or "When will my order arrive?"
+    This tool gives the agent the ability to answer these questions accurately by
+    looking up real order data. Without this, the agent would have to guess or say
+    it doesn't know, which would be a bad customer experience.
+    
+    HOW IT WORKS:
+    1. Takes order ID from customer message (agent extracts it)
+    2. Looks up order in MOCK_ORDERS (in production, would query database/API)
+    3. Formats status information in a customer-friendly way
+    4. Returns status, tracking number, delivery date, and items
     
     Use this tool when customers ask about:
     - Where is my order?
@@ -132,7 +193,25 @@ You'll receive a tracking number via email as soon as your order ships. Thanks f
 
 @tool
 def initiate_return(order_id: str, reason: str) -> str:
-    """Start the return process for a customer's order.
+    """
+    Start the return process for a customer's order.
+    
+    WHAT IT DOES:
+    Creates a return authorization (RMA) and provides the customer with step-by-step
+    instructions for returning their item. Handles different return types (defective
+    items get free shipping, regular returns have a shipping fee).
+
+    WHY IT'S IMPORTANT:
+    Processing returns manually is time-consuming. This tool automates the initial
+    return authorization, generates an RMA number, and gives customers clear instructions.
+    The agent can initiate returns in conversation without needing a human agent to do it.
+    
+    HOW IT WORKS:
+    1. Takes order ID and return reason from customer message
+    2. Verifies order exists
+    3. Generates return authorization number (RMA)
+    4. Determines if return is free (defective/damaged) or paid (other reasons)
+    5. Returns formatted instructions with RMA number and steps
     
     Use this tool when customers want to:
     - Return an item
@@ -203,7 +282,23 @@ Would you like to proceed with this return?"""
 
 @tool
 def check_product_availability(product_name: str) -> str:
-    """Check if a product is currently in stock and available for purchase.
+    """
+    Check if a product is currently in stock and available for purchase.
+    
+    WHAT IT DOES:
+    Queries the inventory system to check if a product is available, how many units
+    are in stock, and when out-of-stock items might be restocked.
+
+    WHY IT'S IMPORTANT:
+    Customers often ask "Do you have X in stock?" before ordering. This tool allows
+    the agent to give real-time inventory information, helping customers make
+    purchasing decisions and setting expectations about availability.
+    
+    HOW IT WORKS:
+    1. Takes product name from customer query
+    2. Searches MOCK_INVENTORY (in production, queries inventory database/API)
+    3. Matches product names (case-insensitive, partial matching)
+    4. Returns stock status, quantity, and restock date if out of stock
     
     Use this tool when customers ask:
     - Is [product] in stock?
@@ -267,7 +362,26 @@ def search_vector_knowledge_base(
     min_similarity_score: float = 0.0,
     categories: str = ""
 ) -> str:
-    """Advanced vector search across the knowledge base with similarity scoring.
+    """
+    Advanced vector search across the knowledge base with similarity scoring.
+    
+    WHAT IT DOES:
+    Performs semantic similarity search (not just keyword matching) across the
+    knowledge base. This can find relevant information even when the wording doesn't
+    exactly match. Includes similarity scores so you can filter by relevance.
+
+    WHY IT'S IMPORTANT:
+    This is more powerful than the basic search_knowledge_base because:
+    - Semantic search understands meaning, not just keywords
+    - Similarity scores help judge information quality
+    - Can filter by categories for more targeted results
+    - Useful for complex questions that need multiple information sources
+    
+    HOW IT WORKS:
+    1. Converts query into embedding (vector representation of meaning)
+    2. Compares against all documents in vector store using cosine similarity
+    3. Returns top results with similarity scores (0.0 to 1.0)
+    4. Filters by minimum score threshold and optional categories
 
     Use this tool for complex queries that need:
     - Semantic similarity matching (finds conceptually related content)
@@ -371,7 +485,28 @@ def search_vector_knowledge_base(
 
 @tool
 def escalate_to_human(reason: str, customer_message: str) -> str:
-    """Escalate the conversation to a human support agent.
+    """
+    Escalate the conversation to a human support agent.
+    
+    WHAT IT DOES:
+    Creates a support ticket and transfers the conversation to a human agent.
+    Different escalation types get different response messages (e.g., frustrated
+    customers get priority, complex issues get assigned to specialists).
+
+    WHY IT'S IMPORTANT:
+    Not all customer issues can be solved by an AI agent. This tool provides a
+    graceful way to hand off to humans when:
+    - Customer is upset (needs empathy and special handling)
+    - Issue is too complex for automation
+    - Customer explicitly requests human
+    - Agent doesn't have the information needed
+    
+    HOW IT WORKS:
+    1. Takes escalation reason and customer message
+    2. Generates unique ticket ID
+    3. Logs escalation (in production, would create ticket in help desk system)
+    4. Returns appropriate message based on escalation type
+    5. Different messages for frustrated vs complex vs explicit requests
     
     Use this tool when:
     - Customer is frustrated, angry, or dissatisfied
@@ -436,11 +571,17 @@ Is there anything else I can assist you with?"""
 
 
 # Export all tools as a list for easy import
+# WHAT: List of all available tools that the agent can use
+# WHY: This list is imported by agent.py and bound to the LLM. The LLM reads
+#      this list to know what actions it can take. You can comment out tools
+#      to disable them, or add new tools to give the agent more capabilities.
+#      Note: search_knowledge_base is commented out in favor of search_vector_knowledge_base
+#      which is more powerful
 tools = [
-    # search_knowledge_base,
-    search_vector_knowledge_base,
-    get_order_status,
-    initiate_return,
-    check_product_availability,
-    escalate_to_human,
+    # search_knowledge_base,  # Basic search - using vector search instead
+    search_vector_knowledge_base,  # Advanced semantic search with similarity scores
+    get_order_status,  # Check order tracking and delivery
+    initiate_return,  # Start return process for orders
+    check_product_availability,  # Check if products are in stock
+    escalate_to_human,  # Transfer to human support agent
 ]

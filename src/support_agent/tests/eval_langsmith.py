@@ -1,8 +1,21 @@
 """
 LangSmith Evaluation Script for Customer Support Agent
 
-This script creates a dataset, defines evaluators, and runs evaluations
-that will show up in the LangSmith web interface.
+WHAT THIS FILE DOES:
+Creates a comprehensive evaluation suite using LangSmith (LangChain's evaluation
+platform). Tests the agent on multiple scenarios, measures performance with various
+evaluators, and provides detailed metrics and traces.
+
+WHY IT'S IMPORTANT:
+Evaluation ensures the agent works correctly and helps identify areas for improvement.
+LangSmith provides:
+- Automated testing across many scenarios
+- Metrics (tool usage, response quality, etc.)
+- Comparison with previous versions
+- Detailed traces showing exactly what the agent did
+- Visual dashboards for monitoring agent performance
+
+This is like having a comprehensive test suite that also gives you performance metrics.
 
 Run: python -m src.support_agent.tests.eval_langsmith
 
@@ -21,6 +34,18 @@ from langsmith.schemas import Run, Example
 
 from langchain_core.messages import HumanMessage
 from src.support_agent.agent import graph
+
+# Import custom evaluators (optional)
+try:
+    from src.support_agent.tests.custom_evaluators import (
+        empathy_evaluator,
+        actionability_evaluator,
+        EMPATHY_EVALUATORS,
+        EFFICIENCY_EVALUATORS,
+    )
+    CUSTOM_EVALUATORS_AVAILABLE = True
+except ImportError:
+    CUSTOM_EVALUATORS_AVAILABLE = False
 
 
 # ============================================================================
@@ -48,10 +73,20 @@ client = Client()
 def create_evaluation_dataset():
     """
     Create a dataset with diverse customer support test cases.
+    
+    WHAT IT DOES:
+    Creates a LangSmith dataset containing various customer scenarios (order status,
+    returns, product availability, etc.). Each example defines a customer question
+    and expected behavior (which tools should be used, what keywords should appear).
+
+    WHY IT'S IMPORTANT:
+    The dataset is what gets evaluated. Without diverse test cases, you can't be
+    confident the agent handles different scenarios correctly. This creates a
+    comprehensive set of scenarios covering the main use cases.
 
     Each example includes:
     - inputs: Customer question
-    - outputs: Expected response characteristics (not exact text)
+    - outputs: Expected response characteristics (not exact text - just what should happen)
     """
 
     print(f"\n{'='*70}")
@@ -195,12 +230,27 @@ def create_evaluation_dataset():
 def run_support_agent(inputs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Run the customer support agent and return structured output.
+    
+    WHAT IT DOES:
+    Wraps the agent graph invocation for evaluation. Takes a customer question,
+    runs it through the agent, and returns structured data (response, tools used, etc.)
+    that evaluators can check.
+
+    WHY IT'S IMPORTANT:
+    This is the function that LangSmith calls for each test case. It needs to
+    return structured data so evaluators can check if the agent:
+    - Used the correct tools
+    - Mentioned expected keywords
+    - Provided quality responses
 
     Args:
-        inputs: Dictionary with 'question' key
+        inputs: Dictionary with 'question' key (the customer's question)
 
     Returns:
-        Dictionary with agent response and metadata
+        Dictionary with:
+        - answer: Agent's final response text
+        - tools_used: List of tools the agent called
+        - message_count: Total messages in conversation (indicates conversation length)
     """
     question = inputs["question"]
 
@@ -242,6 +292,16 @@ def run_support_agent(inputs: Dict[str, Any]) -> Dict[str, Any]:
 def tool_usage_evaluator(run: Run, example: Example) -> dict:
     """
     Check if the agent used the expected tool.
+    
+    WHAT IT DOES:
+    Verifies that the agent called the correct tool(s) for the customer's question.
+    For example, checks that a question about order status resulted in calling
+    get_order_status, not search_knowledge_base.
+
+    WHY IT'S IMPORTANT:
+    Ensures the agent has good "decision-making" - it should use the right tools
+    for the right situations. If the agent uses wrong tools, it wastes time and
+    gives worse answers.
 
     This evaluator verifies the agent is calling the right tools
     for different types of customer queries.
@@ -277,6 +337,16 @@ def tool_usage_evaluator(run: Run, example: Example) -> dict:
 def keyword_presence_evaluator(run: Run, example: Example) -> dict:
     """
     Check if the response mentions expected keywords.
+    
+    WHAT IT DOES:
+    Checks that the agent's response contains relevant keywords. For example, if
+    asked about returns, the response should mention words like "return", "refund",
+    "policy", etc.
+
+    WHY IT'S IMPORTANT:
+    Verifies that responses are actually relevant to the question. A response that
+    doesn't mention any expected keywords is likely off-topic or unhelpful.
+    This is a basic check for response quality.
 
     This evaluator ensures the agent's response contains
     relevant information for the customer's question.
@@ -417,6 +487,19 @@ def create_llm_evaluators() -> List[LangChainStringEvaluator]:
 def run_evaluation():
     """
     Run the complete evaluation suite and display results.
+    
+    WHAT IT DOES:
+    Orchestrates the entire evaluation process:
+    1. Creates/verifies the test dataset
+    2. Prepares all evaluators (tool usage, keywords, quality, etc.)
+    3. Runs each test case through the agent
+    4. Collects scores from all evaluators
+    5. Displays summary and links to detailed results
+
+    WHY IT'S IMPORTANT:
+    This is the main entry point that runs everything. Without this orchestration,
+    you'd have to manually run tests and check results. This automates the entire
+    evaluation workflow and provides a summary of how well the agent performs.
     """
     print(f"\n{'='*70}")
     print(f"CUSTOMER SUPPORT AGENT EVALUATION")
@@ -440,15 +523,21 @@ def run_evaluation():
         response_quality_evaluator,
     ]
 
-    # Add LLM evaluators (commented out by default to save costs)
-    # Uncomment to enable GPT-4 based evaluation
-    # evaluators.extend(create_llm_evaluators())
-
     evaluator_names = [
         "Tool Usage Checker",
         "Keyword Presence Checker",
         "Response Quality Checker",
     ]
+
+    # Add custom evaluators if available
+    if CUSTOM_EVALUATORS_AVAILABLE:
+        evaluators.extend([empathy_evaluator, actionability_evaluator])
+        evaluator_names.extend(["Empathy Checker", "Actionability Checker"])
+
+    # Add LLM evaluators (commented out by default to save costs)
+    # Uncomment to enable GPT-4 based evaluation
+    # evaluators.extend(create_llm_evaluators())
+    # evaluator_names.extend(["Helpfulness (LLM)", "Professionalism (LLM)"])
 
     for name in evaluator_names:
         print(f"  - {name}")
@@ -479,10 +568,33 @@ def run_evaluation():
 
     print(f"Results Summary:")
     print(f"  - Total Examples: 10")
+    print(f"  - Evaluators Run: {len(evaluator_names)}")
 
-    # Print the direct link that was shown during evaluation
+    # Try to extract and display scores from results
+    print(f"\n{'='*70}")
+    print("EVALUATION SCORES")
+    print(f"{'='*70}\n")
+
+    # The results object is an iterator of ExperimentResultRow objects
+    # We need to consume it to see the feedback
+    try:
+        # Access the summary_metrics if available
+        summary_results = client.read_project(project_name=results.experiment_name if hasattr(results, 'experiment_name') else EXPERIMENT_PREFIX)
+        if hasattr(summary_results, 'feedback_stats'):
+            print("Feedback statistics:")
+            for key, stats in summary_results.feedback_stats.items():
+                if hasattr(stats, 'avg') and stats.avg is not None:
+                    print(f"  - {key:25s}: {stats.avg:.2%}")
+    except Exception:
+        # If we can't get summary stats, inform user to check online
+        print("Scores are being calculated in LangSmith...")
+        print("View detailed metrics in the web interface (link below)")
+
     print(f"\n✅ Evaluation finished successfully!")
-    print(f"\nDetailed results with scores are available in LangSmith.")
+    print(f"\nTo see detailed scores and traces for each test:")
+    print(f"  1. Click the link shown above during evaluation")
+    print(f"  2. Or visit: https://smith.langchain.com/projects")
+    print(f"  3. Search for: {EXPERIMENT_PREFIX}")
 
     print(f"\n{'='*70}")
     print("VIEW RESULTS ONLINE")
@@ -492,6 +604,17 @@ def run_evaluation():
     print(f"Experiment Results:")
     print(f"  https://smith.langchain.com/projects\n")
     print(f"Search for: {EXPERIMENT_PREFIX}")
+
+    print(f"\n{'='*70}")
+    print("WHAT TO CHECK IN LANGSMITH")
+    print(f"{'='*70}\n")
+    print("In the LangSmith dashboard you'll see:")
+    print("  ✓ Aggregate scores for each evaluator")
+    print("  ✓ Pass/fail status for each test case")
+    print("  ✓ Detailed feedback comments")
+    print("  ✓ Full conversation traces")
+    print("  ✓ Tool calls made by the agent")
+    print("  ✓ Comparison with previous runs")
     print(f"\n{'='*70}\n")
 
 

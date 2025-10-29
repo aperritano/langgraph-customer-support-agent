@@ -1,4 +1,16 @@
-"""Vector store for knowledge base using InMemoryVectorStore."""
+"""Vector store for knowledge base using InMemoryVectorStore.
+
+WHAT THIS FILE DOES:
+Manages the semantic search functionality for the knowledge base. Converts text documents
+into vector embeddings and enables similarity search - meaning you can search by meaning,
+not just exact keyword matches.
+
+WHY IT'S IMPORTANT:
+Regular keyword search has limitations - it won't find "return policy" if you search for
+"refund process". Vector/semantic search understands meaning, so it can find related
+content even when the words don't match exactly. This makes the agent much better at
+finding relevant information to answer customer questions.
+"""
 
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -9,13 +21,37 @@ from typing import Optional
 
 
 class KnowledgeBaseVectorStore:
-    """Manages the knowledge base vector store."""
+    """
+    Manages the knowledge base vector store.
+    
+    WHAT IT IS:
+    A class that handles converting knowledge base documents into searchable vectors
+    and provides semantic search functionality. Think of it like Google's search
+    engine but for your company's knowledge base - it finds relevant content based
+    on meaning, not just keyword matching.
+    
+    WHY IT EXISTS:
+    Without vector search, you'd need exact keyword matches. With vector search,
+    the agent can find relevant information even when customer questions use different
+    wording than what's in the knowledge base.
+    """
 
     def __init__(self, embeddings_model: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        """Initialize the vector store with embeddings model.
+        """
+        Initialize the vector store with embeddings model.
+        
+        WHAT IT DOES:
+        Sets up the embeddings model that converts text into vectors (numerical
+        representations). These vectors capture the semantic meaning of text.
+
+        WHY IT'S IMPORTANT:
+        The embeddings model is what enables semantic search. Different models have
+        different strengths - this one (all-MiniLM-L6-v2) is a good balance of
+        speed and accuracy.
 
         Args:
             embeddings_model: HuggingFace model name for embeddings
+                            (default is a fast, accurate model good for general use)
         """
         self.embeddings = HuggingFaceEmbeddings(
             model_name=embeddings_model,
@@ -25,7 +61,18 @@ class KnowledgeBaseVectorStore:
         self.vector_store: Optional[InMemoryVectorStore] = None
 
     def load_from_json(self, json_path: str) -> None:
-        """Load knowledge base from JSON file and populate vector store.
+        """
+        Load knowledge base from JSON file and populate vector store.
+        
+        WHAT IT DOES:
+        Reads the knowledge_base.json file, converts all the content (policies, FAQs,
+        product info) into Document objects, then converts those into vector embeddings
+        and stores them in the vector store.
+
+        WHY IT'S IMPORTANT:
+        This is the setup step that makes the knowledge base searchable. Without this,
+        the search tools wouldn't have anything to search. This converts all your
+        company knowledge into a format that can be semantically searched.
 
         Args:
             json_path: Path to knowledge_base.json file
@@ -46,13 +93,24 @@ class KnowledgeBaseVectorStore:
         print(f"✅ Loaded {len(documents)} documents into vector store")
 
     def _json_to_documents(self, data: dict) -> list[Document]:
-        """Convert JSON knowledge base to LangChain documents.
+        """
+        Convert JSON knowledge base to LangChain documents.
+        
+        WHAT IT DOES:
+        Takes the raw JSON data and converts each piece of information (policies,
+        FAQs, product info) into LangChain Document objects. Each document includes
+        the content (text) and metadata (category, type) for filtering.
+
+        WHY IT'S IMPORTANT:
+        LangChain's vector store works with Document objects, not raw JSON. This method
+        structures the knowledge base into a format that can be vectorized and searched.
+        The metadata (category, type) allows filtering searches to specific areas.
 
         Args:
-            data: Knowledge base dictionary
+            data: Knowledge base dictionary from JSON file
 
         Returns:
-            List of Document objects
+            List of Document objects ready for vectorization
         """
         documents = []
         kb = data.get("knowledge_base", {})
@@ -164,15 +222,33 @@ Answer: {faq.get('answer', '')}
         return documents
 
     def search(self, query: str, k: int = 3, filter_category: Optional[str] = None) -> str:
-        """Search the knowledge base for relevant information.
+        """
+        Search the knowledge base for relevant information.
+        
+        WHAT IT DOES:
+        Performs semantic similarity search - converts the query to a vector, compares it
+        against all documents in the vector store, and returns the most similar ones.
+        Can optionally filter by category (e.g., only search return policies).
+
+        WHY IT'S IMPORTANT:
+        This is the core search functionality that tools use. When a customer asks "What's
+        your return policy?", this finds the relevant return policy information even if
+        the question uses different wording than what's in the knowledge base.
+
+        HOW IT WORKS:
+        1. Convert query to embedding (vector)
+        2. Compare against all document embeddings using cosine similarity
+        3. Return top k most similar documents
+        4. Optional: Filter to specific category before searching
 
         Args:
-            query: Search query
-            k: Number of results to return
+            query: Customer's question or search terms
+            k: Number of results to return (default: 3)
             filter_category: Optional category filter (return, shipping, payment, product, general)
+                            Only searches documents in that category
 
         Returns:
-            Formatted search results
+            Formatted search results as a string
         """
         if self.vector_store is None:
             return "Error: Vector store not initialized. Please load knowledge base first."
@@ -208,16 +284,30 @@ Answer: {faq.get('answer', '')}
         filter_categories: Optional[list[str]] = None,
         score_threshold: float = 0.0
     ) -> list[tuple[Document, float]]:
-        """Search the knowledge base with similarity scores.
+        """
+        Search the knowledge base with similarity scores.
+        
+        WHAT IT DOES:
+        Same as search() but also returns similarity scores for each result. Scores indicate
+        how relevant each result is (0.0 = not relevant, 1.0 = very relevant). This allows
+        filtering out low-relevance results and showing customers how confident the match is.
+
+        WHY IT'S IMPORTANT:
+        Sometimes search results aren't very relevant. With scores, you can:
+        - Filter out results below a certain relevance threshold
+        - Show users how confident the match is
+        - Debug why certain searches aren't working (low scores indicate poor matches)
+        - Make the agent smarter by only using highly-relevant information
 
         Args:
-            query: Search query
-            k: Number of results to return
-            filter_categories: Optional list of categories to filter by
-            score_threshold: Minimum similarity score (0.0 to 1.0)
+            query: Customer's question or search terms
+            k: Maximum number of results to return
+            filter_categories: Optional list of categories to filter by (can search multiple)
+            score_threshold: Minimum similarity score (0.0 to 1.0) - filters out low-relevance results
 
         Returns:
-            List of (Document, score) tuples sorted by relevance
+            List of (Document, score) tuples, sorted by relevance (highest score first)
+            Score is 0.0-1.0 where 1.0 means very similar, 0.0 means not similar
         """
         if self.vector_store is None:
             return []
@@ -254,11 +344,28 @@ Answer: {faq.get('answer', '')}
 
 
 # Global instance - initialized lazily
+# WHAT: A module-level variable that holds the vector store instance
+# WHY: We want a single instance that loads the knowledge base once, then gets reused.
+#      This is a "singleton" pattern - ensures all tools use the same vector store.
 _vector_store_instance: Optional[KnowledgeBaseVectorStore] = None
 
 
 def get_vector_store() -> KnowledgeBaseVectorStore:
-    """Get or create the global vector store instance."""
+    """
+    Get or create the global vector store instance.
+    
+    WHAT IT DOES:
+    Returns the global vector store instance, creating and loading it if it doesn't exist yet.
+    This is lazy initialization - the knowledge base only loads when first needed.
+    
+    WHY IT'S IMPORTANT:
+    Provides a convenient way for tools to access the vector store without worrying about
+    initialization. Tools just call get_vector_store() and get a ready-to-use instance.
+    The singleton pattern ensures we only load the knowledge base once, which is more efficient.
+    
+    Returns:
+        The global KnowledgeBaseVectorStore instance (loaded and ready to search)
+    """
     global _vector_store_instance
 
     if _vector_store_instance is None:

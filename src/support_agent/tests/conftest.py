@@ -1,10 +1,30 @@
-"""Pytest configuration and shared fixtures for support agent tests."""
+"""Pytest configuration and shared fixtures for support agent tests.
+
+WHAT THIS FILE DOES:
+Sets up shared test configuration and reusable test data (fixtures) that multiple
+test files can use. This prevents code duplication across tests.
+
+WHY IT'S IMPORTANT:
+Without this file, each test file would need to create its own sample messages and
+test data. This file provides common test utilities that all tests can share, making
+tests cleaner and easier to maintain.
+"""
 
 import pytest
 
 
 def pytest_configure(config):
-    """Configure custom pytest markers."""
+    """
+    Configure custom pytest markers.
+    
+    WHAT IT DOES:
+    Registers custom markers that can be used to categorize tests (e.g., @pytest.mark.integration).
+    
+    WHY IT'S IMPORTANT:
+    Allows filtering tests - you can run only unit tests (fast) or only integration tests (slower).
+    This is useful during development when you want quick feedback from unit tests,
+    and run integration tests separately.
+    """
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests (require LLM, slower)"
     )
@@ -15,7 +35,16 @@ def pytest_configure(config):
 
 @pytest.fixture
 def sample_human_message():
-    """Fixture providing a sample human message."""
+    """
+    Fixture providing a sample human message.
+    
+    WHAT IT DOES:
+    Creates a reusable HumanMessage object that tests can use.
+    
+    WHY IT'S IMPORTANT:
+    Tests need sample data to work with. This fixture provides a standard example
+    that many tests can reuse, making tests more consistent and easier to write.
+    """
     from langchain_core.messages import HumanMessage
     return HumanMessage(content="Hello, I need help with my order")
 

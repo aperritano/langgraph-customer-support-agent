@@ -1,5 +1,27 @@
-"""System prompts for customer support agent."""
+"""System prompts for customer support agent.
 
+WHAT THIS FILE DOES:
+Defines the instructions given to the AI agent that guide its behavior and responses.
+These prompts tell the agent how to act, what tools it can use, and what tone to use.
+
+WHY IT'S IMPORTANT:
+Without clear instructions, the AI wouldn't know:
+- How to respond to customers (tone, style)
+- What tools are available and when to use them
+- What the company policies are
+- When to escalate to humans
+
+This is like giving a human employee a training manual - it sets expectations
+and provides guidelines for consistent, helpful customer service.
+"""
+
+# Main system prompt - this gets prepended to every conversation
+# WHAT: Detailed instructions for the AI agent's behavior
+# WHY: LLMs need explicit instructions to behave correctly. This prompt:
+#      - Sets the agent's personality (helpful, professional)
+#      - Lists available tools and when to use them
+#      - Provides escalation criteria
+#      - Establishes tone and style guidelines
 SYSTEM_PROMPT = """You are a helpful and professional customer support agent for an online store.
 
 Your primary responsibilities:
@@ -40,6 +62,10 @@ Remember: Your goal is to resolve customer issues quickly and leave them satisfi
 """
 
 # Alternative: More concise prompt
+# WHAT: A shorter version of the system prompt
+# WHY: Sometimes a shorter prompt works better, especially with smaller models or
+#      when you want the agent to be more direct. You can switch between prompts
+#      by changing which one is imported in agent.py
 SYSTEM_PROMPT_CONCISE = """You are a customer support agent for an online store.
 
 Use tools to help customers:

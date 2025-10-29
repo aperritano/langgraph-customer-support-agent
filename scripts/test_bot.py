@@ -1,6 +1,16 @@
 #!/usr/bin/env python
 """Test script for customer support bot with example conversations.
 
+WHAT THIS FILE DOES:
+Runs a suite of predefined test conversations to verify the agent works correctly
+across different scenarios (order status, returns, product availability, etc.).
+Like an automated test suite, but for conversational flows.
+
+WHY IT'S IMPORTANT:
+Manually testing all conversation types would be time-consuming. This script
+automates testing of common customer scenarios, making it easy to verify the agent
+handles different cases correctly. Great for regression testing after code changes.
+
 Run: python scripts/test_bot.py
 """
 
@@ -74,7 +84,18 @@ TEST_CONVERSATIONS = [
 
 
 async def run_test_conversation(conversation: dict):
-    """Run a single test conversation."""
+    """
+    Run a single test conversation.
+    
+    WHAT IT DOES:
+    Executes a test scenario with one or more customer messages and displays
+    the agent's responses and tool usage.
+    
+    WHY IT'S IMPORTANT:
+    Tests individual conversation flows in isolation, making it easy to debug
+    specific scenarios. Shows what tools were used, helping verify the agent
+    made the right decisions.
+    """
     print("\n" + "=" * 70)
     print(f"🧪 Test: {conversation['name']}")
     print("=" * 70 + "\n")

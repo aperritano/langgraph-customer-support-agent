@@ -1,17 +1,42 @@
 #!/usr/bin/env python3
-"""Script to initialize and test the knowledge base vector store."""
+"""Script to initialize and test the knowledge base vector store.
+
+WHAT THIS FILE DOES:
+A utility script that loads the knowledge base into the vector store and tests
+it with sample queries. Useful for debugging search issues or verifying the
+knowledge base loaded correctly.
+
+WHY IT'S IMPORTANT:
+When search isn't working, it's helpful to have a standalone script to test
+the vector store directly, without needing to run the full agent. Also useful
+for verifying the knowledge base JSON file is formatted correctly.
+
+Run: python scripts/init_vector_store.py
+"""
 
 import sys
 from pathlib import Path
 
-# Add parent directory to path
+# Add parent directory to path so we can import from the package
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.support_agent.vector_store import KnowledgeBaseVectorStore
 
 
 def main():
-    """Initialize vector store and run test queries."""
+    """
+    Initialize vector store and run test queries.
+    
+    WHAT IT DOES:
+    1. Creates a vector store instance
+    2. Loads the knowledge_base.json file
+    3. Runs several test queries to verify search works
+    4. Displays results for manual inspection
+    
+    WHY IT'S IMPORTANT:
+    Provides a quick way to verify the vector store is set up correctly and
+    that searches are returning reasonable results.
+    """
     print("🚀 Initializing Knowledge Base Vector Store\n")
 
     # Create vector store

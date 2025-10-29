@@ -2,6 +2,18 @@
 
 This is the main entry point that LangGraph Dev uses to run the agent.
 The graph variable at the bottom must be exported for langgraph.json to find it.
+
+WHAT THIS FILE DOES:
+This file defines the "brain" of the customer support agent - it's like the main controller
+that orchestrates the conversation flow. It sets up:
+1. The AI model that makes decisions
+2. The workflow that processes customer messages
+3. The logic for when to use tools vs when to respond directly
+
+WHY IT'S IMPORTANT:
+Without this file, the agent wouldn't know how to process customer questions or decide
+when to search the knowledge base, check order status, or escalate to humans.
+This is the core orchestration layer that makes the agent work as a cohesive system.
 """
 
 from typing import Literal, cast
@@ -17,7 +29,12 @@ from .tools import tools
 from .prompts import SYSTEM_PROMPT
 
 
-# Initialize LLM with tool calling capability
+# Initialize LLM (Large Language Model) with tool calling capability
+# WHAT: This creates the AI model that will make decisions and respond to customers
+# WHY: The LLM needs to be "bound" to tools so it knows what actions it can take
+#      (like searching the knowledge base or checking order status)
+#      Temperature=0 makes responses more predictable/consistent, which is important
+#      for customer support where you want reliable, professional answers
 llm = ChatOllama(
     model="llama3.1:latest",  # Change to mistral:7b or qwen2.5:7b if preferred
     temperature=0,  # Deterministic responses for customer support
@@ -28,16 +45,28 @@ def agent_node(state: SupportState) -> dict:
     """
     Agent reasoning node - decides which tools to call or provides final answer.
     
-    This implements the "Reasoning" part of the ReAct pattern.
-    The LLM analyzes the conversation and decides whether to:
-    1. Call one or more tools to gather information
-    2. Provide a final answer to the customer
+    WHAT IT DOES:
+    This is the "thinking" step where the AI analyzes what the customer asked and decides:
+    1. Does it need more information? → Call tools (search KB, check order, etc.)
+    2. Does it have enough info? → Respond directly to the customer
+    
+    WHY IT'S IMPORTANT:
+    This function implements the "Reason" step in the ReAct pattern (Reason → Act → Observe).
+    Without this, the agent wouldn't know when to use tools vs when to answer directly.
+    It's like the agent's decision-making brain that evaluates each customer message.
+    
+    HOW IT WORKS:
+    - Takes the conversation history (state)
+    - Adds the system prompt (instructions for the agent)
+    - Sends it all to the LLM
+    - LLM responds with either tool calls OR a direct answer
+    - Returns the LLM's response to be added to the conversation
     
     Args:
         state: Current conversation state with message history
     
     Returns:
-        dict with new messages to add to state
+        dict with new messages to add to state (either tool calls or direct response)
     """
     # Prepend system prompt to conversation
     messages = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
@@ -53,15 +82,24 @@ def should_continue(state: SupportState) -> Literal["tools", "__end__"]:
     """
     Conditional edge - decides whether to continue to tools or end.
 
-    This is the decision point in the ReAct loop:
-    - If LLM made tool calls → go to tools node to execute them
-    - If LLM provided a final answer → end the conversation turn
+    WHAT IT DOES:
+    This is a routing function that looks at the last message from the agent and decides:
+    - "tools" → Agent wants to use tools, so route to the tools node
+    - "__end__" → Agent gave a final answer, so we're done with this turn
+
+    WHY IT'S IMPORTANT:
+    The graph needs to know where to go next after the agent thinks. This function
+    acts like a traffic controller, directing the conversation flow. Without it,
+    the graph wouldn't know whether to execute tools or finish responding to the customer.
+    
+    This is the key decision point that makes the ReAct loop work - it determines
+    whether we need another cycle (Reason → Act) or if we're done.
 
     Args:
-        state: Current conversation state
+        state: Current conversation state with all messages so far
 
     Returns:
-        "tools" if tool calls exist, "__end__" otherwise
+        "tools" if agent wants to call tools, "__end__" if agent gave final answer
     """
     last_message = state["messages"][-1]
 
@@ -78,23 +116,41 @@ def create_graph():
     """
     Build and compile the customer support agent graph.
     
+    WHAT IT DOES:
+    This function assembles the complete workflow graph that processes customer messages.
+    Think of it like building a flowchart that shows how messages flow through the system.
+    
     Graph structure (ReAct pattern):
     
-        START
+        START (customer sends message)
           ↓
-       [AGENT] ← Reasoning step: decide to call tools or answer
+       [AGENT] ← AI thinks: "Do I need tools or can I answer directly?"
           ↓
-       {should_continue?}
+       {should_continue?} ← Decision point: tool calls or final answer?
         ↙        ↘
-    [TOOLS]    [END]
+    [TOOLS]    [END] ← Done! Send response to customer
        ↓
-    [AGENT] ← Loop back with tool results
+    [AGENT] ← Loop back with tool results, AI thinks again with new info
     
-    The graph loops between agent and tools until the agent
-    provides a final answer without tool calls.
+    WHY IT'S IMPORTANT:
+    This function creates the actual executable graph that LangGraph will run.
+    Without it, you'd just have functions but no way to connect them into a working system.
+    The graph structure implements the ReAct pattern which allows the agent to:
+    - Think (Reason)
+    - Take actions using tools (Act)
+    - See results (Observe)
+    - Think again with new information
+    - Repeat until it has an answer
+    
+    HOW IT WORKS:
+    1. Creates a StateGraph with our SupportState schema (defines data structure)
+    2. Adds two nodes: "agent" (thinking) and "tools" (doing actions)
+    3. Sets up flow: START → agent → decision → tools OR end
+    4. After tools run, loops back to agent so it can use the tool results
+    5. Compiles it all into an executable graph
     
     Returns:
-        Compiled LangGraph application
+        Compiled LangGraph application ready to process customer messages
     """
     # Initialize graph with our state schema
     workflow = StateGraph(SupportState)
@@ -125,7 +181,10 @@ def create_graph():
 
 
 # Create and export the graph
-# This variable name must match what's in langgraph.json
+# WHAT: This creates the actual graph instance that will be used throughout the application
+# WHY: LangGraph Dev looks for a variable named "graph" in this file to run the agent.
+#      This is the entry point that other parts of the system (CLI, API, tests) will use.
+#      It's created once when this module is imported, then reused for all conversations.
 graph = create_graph()
 
 
