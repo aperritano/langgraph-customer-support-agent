@@ -554,7 +554,7 @@ def run_evaluation():
         experiment_prefix=EXPERIMENT_PREFIX,
         metadata={
             "version": "1.0",
-            "model": "llama3.1:latest",
+            "model": "llama3.2:1b",
             "description": "Comprehensive evaluation of customer support agent",
             "date": datetime.now().isoformat(),
         },

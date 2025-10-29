@@ -17,6 +17,7 @@ This is the core orchestration layer that makes the agent work as a cohesive sys
 """
 
 from typing import Literal, cast
+import os
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode
 from langchain_ollama import ChatOllama
@@ -35,9 +36,13 @@ from .prompts import SYSTEM_PROMPT
 #      (like searching the knowledge base or checking order status)
 #      Temperature=0 makes responses more predictable/consistent, which is important
 #      for customer support where you want reliable, professional answers
+# Get Ollama base URL from environment, default to localhost for local development
+ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 llm = ChatOllama(
-    model="llama3.1:latest",  # Change to mistral:7b or qwen2.5:7b if preferred
+    model="llama3.2:1b",  # Smaller, faster model for CPU inference (~1GB, much faster responses)
     temperature=0,  # Deterministic responses for customer support
+    base_url=ollama_base_url,  # Use environment variable or default to localhost
+    timeout=120.0,  # 2 minute timeout - faster with smaller model
 ).bind_tools(tools)
 
 
@@ -72,10 +77,17 @@ def agent_node(state: SupportState) -> dict:
     messages = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
     
     # Invoke LLM - it will decide to call tools or respond directly
-    response = llm.invoke(messages)
-    
-    # Return response as state update
-    return {"messages": [response]}
+    # Add timeout to prevent hanging
+    try:
+        print(f"DEBUG: Calling LLM with {len(messages)} messages, base_url={ollama_base_url}")
+        response = llm.invoke(messages)
+        print(f"DEBUG: LLM response received: {type(response)}")
+        return {"messages": [response]}
+    except Exception as e:
+        print(f"ERROR: LLM invocation failed: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def should_continue(state: SupportState) -> Literal["tools", "__end__"]:

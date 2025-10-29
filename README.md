@@ -14,6 +14,7 @@ A complete, production-ready customer support agent built with:
 - ✅ Full documentation and examples
 - ✅ Vector store implementation for semantic search
 - ✅ LangSmith evaluation suite with online dashboard
+- ✅ Comprehensive test suite (50+ unit tests)
 
 ## Features
 
@@ -56,13 +57,13 @@ Download from <https://ollama.ai/download/windows>
 **Pull the model:**
 
 ```bash
-ollama pull llama3.1:latest
+ollama pull llama3.2:1b
 ```
 
 ### Step 2: Setup Python Environment (1 minute)
 
 ```bash
-cd customer-support-bot
+cd langgraph-customer-support-agent
 
 # Create virtual environment
 python -m venv venv
@@ -104,7 +105,7 @@ http://localhost:8123
 
 3. Click "Start Agent" to begin:
 
-![Agent UI Start](agent-ui-start.png)
+![Agent UI Start](images/agent-ui-start.png)
 
 4. Enter your messages in the chat interface and interact with the customer support bot
 5. The UI shows tool calls and agent responses in real-time
@@ -124,7 +125,7 @@ python scripts/test_bot.py
 ## 📁 Project Structure
 
 ```
-customer-support-bot/
+langgraph-customer-support-agent/
 ├── 📖 Documentation
 │   ├── README.md                  # This file - complete documentation
 │   ├── LICENSE                    # MIT License
@@ -137,7 +138,14 @@ customer-support-bot/
 │   │   ├── tools.py              🔧 5 support tools
 │   │   ├── state.py              💾 State schema
 │   │   ├── prompts.py            💬 System instructions
-│   │   └── vector_store.py       🔍 Vector search implementation
+│   │   ├── vector_store.py       🔍 Vector search implementation
+│   │   └── tests/                🧪 Test suite and evaluations
+│   │       ├── test_agent.py     # Agent graph logic tests
+│   │       ├── test_tools.py     # Support tools tests
+│   │       ├── test_state.py     # State management tests
+│   │       ├── eval_langsmith.py # LangSmith evaluation script
+│   │       ├── custom_evaluators.py # Custom evaluators
+│   │       └── README.md         # Test documentation
 │   │
 │   └── scripts/                   🎬 Ready-to-run scripts
 │       ├── cli.py                 💻 Interactive chat
@@ -228,7 +236,7 @@ The Agent UI provides an interactive web interface to chat with your customer su
 
 3. **Start the conversation**:
 
-   ![Agent UI Start](agent-ui-start.png)
+   ![Agent UI Start](images/agent-ui-start.png)
 
    Click "Start Agent" or begin typing your message in the chat interface
 
@@ -298,6 +306,254 @@ The bot has access to these tools:
 3. **initiate_return** - Start return process
 4. **check_product_availability** - Check stock levels
 5. **escalate_to_human** - Transfer to human agent
+
+## 🧪 Testing
+
+The project includes a comprehensive TDD (Test-Driven Development) test suite with **50+ unit tests** covering all key functionality.
+
+### Test Structure
+
+```
+src/support_agent/tests/
+├── test_agent.py       # Agent graph logic (10 tests)
+├── test_tools.py       # Support tools (26 tests)
+├── test_state.py       # State management (14 tests)
+├── conftest.py         # Pytest fixtures
+├── eval_langsmith.py   # LangSmith evaluation script
+├── custom_evaluators.py # Custom evaluators (7 available)
+├── README.md          # Detailed test documentation
+└── QUICKSTART.md      # Quick reference guide
+```
+
+### Running Tests
+
+**IMPORTANT**: Activate the virtual environment first!
+
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Run all unit tests (fast, no LLM required)
+pytest src/support_agent/tests/ -m "not integration"
+
+# Run all tests including integration tests (requires Ollama)
+pytest src/support_agent/tests/
+
+# Run with verbose output
+pytest src/support_agent/tests/ -v
+
+# Run specific test file
+pytest src/support_agent/tests/test_tools.py
+
+# Run specific test
+pytest src/support_agent/tests/test_tools.py::TestGetOrderStatus::test_get_order_status_in_transit
+```
+
+### Quick Test Script
+
+Use the provided test runner script:
+
+```bash
+./run_tests.sh
+```
+
+### Test Coverage
+
+- ✅ **Agent Logic**: Conditional routing, message handling, graph structure
+- ✅ **Tools**: Order status, returns, product availability, escalation
+- ✅ **State Management**: Message accumulation, type preservation, conversation flow
+- ✅ **Mock Data**: Data integrity and consistency
+
+### Example Unit Tests
+
+```python
+# test_tools.py - Test order status lookup
+def test_get_order_status_in_transit():
+    result = get_order_status.invoke({"order_id": "123456"})
+    assert "123456" in result
+    assert "in_transit" in result.lower()
+    assert "tracking" in result.lower()
+
+# test_agent.py - Test conditional routing
+def test_should_continue_with_tool_calls():
+    state = {
+        "messages": [
+            AIMessage(content="", tool_calls=[{"name": "get_order_status"}])
+        ]
+    }
+    result = should_continue(state)
+    assert result == "tools"
+```
+
+### Integration Tests
+
+Integration tests marked with `@pytest.mark.integration` test end-to-end flows and require:
+
+- Ollama running with llama3.2:1b model
+- Longer execution time
+
+Skip integration tests for quick development:
+
+```bash
+pytest src/support_agent/tests/ -m "not integration"
+```
+
+### Legacy Test Scripts
+
+```bash
+# Run interactive test conversations
+python scripts/test_bot.py
+
+# Test vector store functionality
+python scripts/init_vector_store.py
+```
+
+### Writing New Tests
+
+Follow TDD principles when adding features:
+
+1. **Write test first** - Define expected behavior
+2. **Run test** - Verify it fails (red)
+3. **Implement feature** - Make it work
+4. **Run test again** - Verify it passes (green)
+5. **Refactor** - Clean up while keeping tests green
+
+## 🎯 LangSmith Evaluations
+
+Evaluate your agent's performance with automated testing that shows up in an online dashboard.
+
+### Quick Start
+
+1. **Setup LangSmith**:
+
+   ```bash
+   export LANGCHAIN_API_KEY="your-key-from-smith.langchain.com"
+   export LANGCHAIN_TRACING_V2=true
+   ```
+
+2. **Check Setup**:
+
+   ```bash
+   python check_langsmith_setup.py
+   ```
+
+3. **Run Evaluation**:
+
+   ```bash
+   python -m src.support_agent.tests.eval_langsmith
+   ```
+
+### What You Get
+
+- **Dataset**: 10 test cases covering various customer scenarios
+- **Evaluators**: 5 automated metrics (tool usage, keyword presence, response quality, empathy, actionability)
+- **Online Dashboard**: View results at <https://smith.langchain.com>
+- **Traces**: Detailed execution traces for debugging
+
+Example output:
+
+```
+Average Scores:
+  - tool_usage          : 90.00%
+  - keyword_presence    : 85.00%
+  - response_quality    : 100.00%
+  - empathy             : 80.00%
+  - actionability       : 95.00%
+
+View results: https://smith.langchain.com/projects
+```
+
+### Available Evaluators
+
+The evaluation system includes **5 active evaluators** and **7 additional custom evaluators**:
+
+#### Currently Active (5 evaluators)
+1. ✅ **Tool Usage** - Checks if correct tool was called
+2. ✅ **Keyword Presence** - Verifies expected info in response
+3. ✅ **Response Quality** - Checks completeness and formatting
+4. ✅ **Empathy** - Detects empathetic language in difficult situations
+5. ✅ **Actionability** - Ensures response provides clear next steps
+
+#### Ready to Activate (7 more)
+6. **Politeness** - Checks for courtesy and professional tone
+7. **Conciseness** - Evaluates appropriate response length
+8. **Specificity** - Prefers specific details over generic statements
+9. **Tool Efficiency** - Checks for efficient tool usage
+10. **Resolution Clarity** - Ensures clear problem resolution
+
+### Adding More Evaluators
+
+Edit `src/support_agent/tests/eval_langsmith.py`:
+
+```python
+from src.support_agent.tests.custom_evaluators import (
+    empathy_evaluator,
+    actionability_evaluator,
+    politeness_evaluator,      # NEW
+    conciseness_evaluator,     # NEW
+)
+
+evaluators.extend([
+    empathy_evaluator,
+    actionability_evaluator,
+    politeness_evaluator,      # Add more
+    conciseness_evaluator,
+])
+```
+
+### Viewing Results
+
+After running the evaluation, go to <https://smith.langchain.com> and search for "support-agent-eval" to see:
+
+- **Aggregate scores** - Average for each evaluator
+- **Per-example results** - Scores for each test case
+- **Feedback comments** - Why each test passed/failed
+- **Full traces** - Complete conversation flows
+
+### Test Cases
+
+The evaluation includes 10 diverse test cases:
+
+| # | Category | Question |
+|---|----------|----------|
+| 1 | return_policy | What's your return policy? |
+| 2 | shipping | Do you offer international shipping? |
+| 3 | payment | What payment methods do you accept? |
+| 4 | order_status | Can you check the status of order #123456? |
+| 5 | order_status | Where is my order 789012? |
+| 6 | return_request | I want to return order #123456 because it's defective |
+| 7 | inventory | Is the wireless mouse in stock? |
+| 8 | inventory | Do you have any laptops available? |
+| 9 | complex | Hi! I ordered a keyboard last week... |
+| 10 | escalation | This is ridiculous! I've been waiting for weeks... |
+
+### Creating Custom Evaluators
+
+You can create your own evaluators:
+
+```python
+from langsmith.schemas import Run, Example
+
+def my_evaluator(run: Run, example: Example) -> dict:
+    """Description of what this checks."""
+    response = run.outputs.get("answer", "")
+
+    # Your logic here
+    if some_condition:
+        return {
+            "key": "my_metric",
+            "score": 1.0,
+            "comment": "Why it passed"
+        }
+    else:
+        return {
+            "key": "my_metric",
+            "score": 0.0,
+            "comment": "Why it failed"
+        }
+```
+
+See `src/support_agent/tests/CUSTOM_EVALUATORS_GUIDE.md` for detailed documentation.
 
 ## 🔧 Customization
 
@@ -380,7 +636,7 @@ llm = ChatOllama(
 
 Available Ollama models:
 
-- `llama3.1:latest` - Fast, efficient (recommended)
+- `llama3.2:1b` - Fast, efficient (recommended)
 - `mistral:7b` - Good balance
 - `qwen2.5:7b` - Strong reasoning
 - `llama3.1:8b` - Larger, more capable
@@ -453,152 +709,6 @@ memory = PostgresSaver.from_conn_string(
 )
 ```
 
-### Creating a Web UI
-
-#### Simple React Frontend
-
-```jsx
-// Example: chat.jsx
-import { useState } from 'react';
-
-function Chat() {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  
-  const sendMessage = async () => {
-    const response = await fetch('http://localhost:8123/threads/my-thread/runs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        input: { messages: [{ role: 'user', content: input }] }
-      })
-    });
-    
-    const data = await response.json();
-    setMessages([...messages, data.output.messages[-1]]);
-  };
-  
-  return (
-    <div>
-      {messages.map(msg => <div>{msg.content}</div>)}
-      <input value={input} onChange={e => setInput(e.target.value)} />
-      <button onClick={sendMessage}>Send</button>
-    </div>
-  );
-}
-```
-
-## 🧪 Testing
-
-The project includes a comprehensive TDD (Test-Driven Development) test suite with **50+ unit tests** covering all key functionality.
-
-### Test Structure
-
-```
-src/support_agent/tests/
-├── test_agent.py       # Agent graph logic (10 tests)
-├── test_tools.py       # Support tools (26 tests)
-├── test_state.py       # State management (14 tests)
-├── conftest.py         # Pytest fixtures
-├── README.md          # Detailed test documentation
-└── QUICKSTART.md      # Quick reference guide
-```
-
-### Running Tests
-
-**IMPORTANT**: Activate the virtual environment first!
-
-```bash
-# Activate virtual environment
-source .venv/bin/activate
-
-# Run all unit tests (fast, no LLM required)
-pytest src/support_agent/tests/ -m "not integration"
-
-# Run all tests including integration tests (requires Ollama)
-pytest src/support_agent/tests/
-
-# Run with verbose output
-pytest src/support_agent/tests/ -v
-
-# Run specific test file
-pytest src/support_agent/tests/test_tools.py
-
-# Run specific test
-pytest src/support_agent/tests/test_tools.py::TestGetOrderStatus::test_get_order_status_in_transit
-```
-
-### Quick Test Script
-
-Use the provided test runner script:
-
-```bash
-./run_tests.sh
-```
-
-### Test Coverage
-
-- ✅ **Agent Logic**: Conditional routing, message handling, graph structure
-- ✅ **Tools**: Order status, returns, product availability, escalation
-- ✅ **State Management**: Message accumulation, type preservation, conversation flow
-- ✅ **Mock Data**: Data integrity and consistency
-
-### Example Unit Tests
-
-```python
-# test_tools.py - Test order status lookup
-def test_get_order_status_in_transit():
-    result = get_order_status.invoke({"order_id": "123456"})
-    assert "123456" in result
-    assert "in_transit" in result.lower()
-    assert "tracking" in result.lower()
-
-# test_agent.py - Test conditional routing
-def test_should_continue_with_tool_calls():
-    state = {
-        "messages": [
-            AIMessage(content="", tool_calls=[{"name": "get_order_status"}])
-        ]
-    }
-    result = should_continue(state)
-    assert result == "tools"
-```
-
-### Integration Tests
-
-Integration tests marked with `@pytest.mark.integration` test end-to-end flows and require:
-
-- Ollama running with llama3.1:latest model
-- Longer execution time
-
-Skip integration tests for quick development:
-
-```bash
-pytest src/support_agent/tests/ -m "not integration"
-```
-
-### Legacy Test Scripts
-
-```bash
-# Run interactive test conversations
-python scripts/test_bot.py
-
-# Test vector store functionality
-python scripts/init_vector_store.py
-```
-
-### Writing New Tests
-
-Follow TDD principles when adding features:
-
-1. **Write test first** - Define expected behavior
-2. **Run test** - Verify it fails (red)
-3. **Implement feature** - Make it work
-4. **Run test again** - Verify it passes (green)
-5. **Refactor** - Clean up while keeping tests green
-
-See [src/support_agent/tests/README.md](src/support_agent/tests/README.md) for detailed documentation.
-
 ## 🐳 Docker Setup (Recommended for Quick Start)
 
 The easiest way to get started! Everything is pre-configured and ready to run.
@@ -624,7 +734,7 @@ docker-compose up
 **What happens automatically:**
 
 1. ✅ Ollama service starts
-2. ✅ Downloads llama3.1:latest model (happens once, ~2GB)
+2. ✅ Downloads llama3.2:1b model (happens once, ~2GB)
 3. ✅ Support bot starts and connects to Ollama
 4. ✅ API ready at <http://localhost:8123>
 
@@ -653,7 +763,7 @@ Once Docker is running, access the Agent UI interface:
 
 3. **Start chatting**:
 
-   ![Agent UI Start](agent-ui-start.png)
+   ![Agent UI Start](images/agent-ui-start.png)
 
    Click "Start Agent" and begin interacting with your customer support bot
 
@@ -691,7 +801,7 @@ The setup includes three services:
    - Accessible at <http://ollama:11434> (internal) and <http://localhost:11434> (external)
 
 2. **ollama-init** - One-time model initialization
-   - Automatically pulls llama3.1:latest model on first run
+   - Automatically pulls llama3.2:1b model on first run
    - Ensures model is ready before starting the bot
    - Exits after successful initialization
 
@@ -712,7 +822,7 @@ The setup includes three services:
 The Docker setup automatically configures:
 
 - LangGraph server on port 8123
-- Ollama service with llama3.1:latest model pre-loaded
+- Ollama service with llama3.2:1b model pre-loaded
 - Persistent storage for conversation history
 - Network connectivity between all services
 - Volume mounts for live code editing
@@ -733,7 +843,7 @@ ollama-init:
 Available models:
 
 - `llama3.2:1b` - Smallest, fastest (~1GB RAM)
-- `llama3.1:latest` - Recommended, good balance (~3GB RAM)
+- `llama3.2:1b` - Recommended, good balance (~3GB RAM)
 - `mistral:7b` - More capable (~5GB RAM)
 - `llama3.1:8b` - Largest, most capable (~7GB RAM)
 
@@ -781,7 +891,7 @@ services:
 docker-compose logs ollama-init
 
 # Manually pull model
-docker-compose exec ollama ollama pull llama3.1:latest
+docker-compose exec ollama ollama pull llama3.2:1b
 
 # Restart services
 docker-compose restart
@@ -874,7 +984,7 @@ pip install -r requirements.txt
 
 ```bash
 # Make sure you're in the project root
-pwd  # Should show: .../customer-support-bot
+pwd  # Should show: .../langgraph-customer-support-agent
 
 # Install package in editable mode
 pip install -e .
@@ -904,13 +1014,13 @@ brew services start ollama
 
 #### Model Not Found
 
-**Error**: `Model 'llama3.1:latest' not found`
+**Error**: `Model 'llama3.2:1b' not found`
 
 **Solution**:
 
 ```bash
 # Pull the model
-ollama pull llama3.1:latest
+ollama pull llama3.2:1b
 
 # Verify it's installed
 ollama list
@@ -998,7 +1108,7 @@ langgraph dev
 **Possible Causes**:
 
 1. **Ollama model doesn't support tool calling well**
-   - Solution: Use llama3.1:latest, mistral:7b, or qwen2.5:7b
+   - Solution: Use llama3.2:1b, mistral:7b, or qwen2.5:7b
    - These models have better tool calling support
 
 2. **System prompt unclear**
@@ -1025,10 +1135,10 @@ print(result.tool_calls)  # Should not be empty
 ```bash
 # 1. Use faster model
 # Edit src/support_agent/agent.py
-llm = ChatOllama(model="llama3.1:latest")  # Fastest
+llm = ChatOllama(model="llama3.2:1b")  # Fastest
 
 # 2. Check Ollama performance
-ollama run llama3.1:latest "Hello"  # Should be fast
+ollama run llama3.2:1b "Hello"  # Should be fast
 
 # 3. Reduce context
 # Limit conversation history if too long
@@ -1136,46 +1246,6 @@ for line in response.iter_lines():
     # Process line
 ```
 
-### Docker Issues
-
-#### Container Won't Start
-
-**Error**: `Container exits immediately`
-
-**Solution**:
-
-```bash
-# Check logs
-docker logs support-bot
-
-# Common issues:
-# 1. Ollama not accessible
-docker-compose logs ollama
-
-# 2. Port conflict
-docker-compose down
-docker-compose up  # Check for port errors
-
-# 3. Permission issues
-chmod -R 755 storage/
-```
-
-#### Can't Connect to Ollama in Docker
-
-**Solution**:
-
-```bash
-# Verify network
-docker network ls
-docker network inspect customer-support-bot_support-network
-
-# Check if services can communicate
-docker-compose exec support-bot ping ollama
-
-# Verify OLLAMA_BASE_URL
-docker-compose exec support-bot env | grep OLLAMA
-```
-
 ## Performance Optimization
 
 ### Reduce Memory Usage
@@ -1252,68 +1322,6 @@ results = vector_store.search("shipping options", k=2, filter_category="shipping
 python scripts/init_vector_store.py
 ```
 
-## Testing & Evaluation
-
-### Unit Tests
-
-Run the comprehensive test suite (50+ tests):
-
-```bash
-source .venv/bin/activate
-pytest src/support_agent/tests/ -m "not integration"
-```
-
-See [QUICKSTART.md](src/support_agent/tests/QUICKSTART.md) for detailed testing instructions.
-
-### LangSmith Evaluations
-
-Evaluate your agent's performance with automated testing that shows up in an online dashboard.
-
-#### Quick Start
-
-1. **Setup LangSmith**:
-
-   ```bash
-   export LANGCHAIN_API_KEY="your-key-from-smith.langchain.com"
-   export LANGCHAIN_TRACING_V2=true
-   ```
-
-2. **Check Setup**:
-
-   ```bash
-   python check_langsmith_setup.py
-   ```
-
-3. **Run Evaluation**:
-
-   ```bash
-   python -m src.support_agent.tests.eval_langsmith
-   ```
-
-#### What You Get
-
-- **Dataset**: 10 test cases covering various customer scenarios
-- **Evaluators**: 3 automated metrics (tool usage, keyword presence, response quality)
-- **Online Dashboard**: View results at <https://smith.langchain.com>
-- **Traces**: Detailed execution traces for debugging
-
-Example output:
-
-```
-Average Scores:
-  - tool_usage          : 90.00%
-  - keyword_presence    : 85.00%
-  - response_quality    : 100.00%
-
-View results: https://smith.langchain.com/projects
-```
-
-#### Documentation
-
-- [Complete Evaluation Guide](src/support_agent/tests/LANGSMITH_EVAL_GUIDE.md) - Full documentation
-- [Example Output](EXAMPLE_LANGSMITH_OUTPUT.md) - What to expect in LangSmith
-- [Evaluation Script](src/support_agent/tests/eval_langsmith.py) - Customizable evaluation code
-
 ## Development
 
 ### Hot Reload
@@ -1325,7 +1333,7 @@ LangGraph Dev automatically reloads when you change code. Just save your files a
 Visualize the LangGraph workflow structure:
 
 **LangGraph Workflow Diagram:**
-![LangGraph Customer Support Agent Workflow](langgraph-graph-mermaid.png)
+![LangGraph Customer Support Agent Workflow](images/langgraph-graph-mermaid.png)
 
 The diagram above shows the complete workflow of the customer support agent:
 
@@ -1453,54 +1461,17 @@ def should_follow_up(state: SupportState) -> str:
     return "continue"
 ```
 
-## Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Make your changes
-4. Test thoroughly
-5. Update documentation
-6. Submit pull request
-
-## Getting Help
-
-Still stuck? Try these resources:
-
-1. **Check Documentation**
-   - [LangGraph Docs](https://langchain-ai.github.io/langgraph/)
-   - [Ollama Docs](https://ollama.ai/docs)
-
-2. **Enable Debug Logging**
-
-   ```python
-   import logging
-   logging.basicConfig(level=logging.DEBUG)
-   ```
-
-3. **Run with Verbose Mode**
-
-   ```bash
-   export LANGCHAIN_VERBOSE=true
-   export LANGCHAIN_TRACING_V2=true
-   ```
-
-4. **Check GitHub Issues**
-   - LangGraph issues
-   - Ollama issues
-
-5. **Community Support**
-   - LangChain Discord
-   - Stack Overflow
-
 ## Resources
 
 - [LangGraph Tutorials](https://langchain-ai.github.io/langgraph/tutorials/)
 - [Tool Calling Guide](https://python.langchain.com/docs/modules/agents/tools/)
 - [Ollama Models](https://ollama.ai/library)
+- [LangSmith Docs](https://docs.smith.langchain.com/)
+- [Evaluation Guide](https://docs.smith.langchain.com/evaluation)
 
 ## Next Steps
 
-- [ ] Add RAG with vector database (ChromaDB) - ✅ Already implemented!
+- [x] Add RAG with vector database (ChromaDB) - ✅ Already implemented!
 - [ ] Integrate with real order management system
 - [ ] Add sentiment analysis for escalation
 - [ ] Create web UI with React
@@ -1532,6 +1503,9 @@ python scripts/cli.py
 # Run tests
 python scripts/test_bot.py
 
+# Run evaluations
+python -m src.support_agent.tests.eval_langsmith
+
 # View examples
 python scripts/api_client_example.py
 
@@ -1542,7 +1516,7 @@ python scripts/init_vector_store.py
 pip install -r requirements.txt
 
 # Get Ollama model
-ollama pull llama3.1:latest
+ollama pull llama3.2:1b
 ```
 
 Happy coding! 🚀
