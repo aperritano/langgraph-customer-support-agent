@@ -872,6 +872,58 @@ python scripts/init_vector_store.py
 
 LangGraph Dev automatically reloads when you change code. Just save your files and test immediately.
 
+### Graph Visualization
+
+Visualize the LangGraph workflow structure:
+
+**LangGraph Workflow Diagram:**
+![LangGraph Customer Support Agent Workflow](langgraph-graph-mermaid.png)
+
+The diagram above shows the complete workflow of the customer support agent:
+- **Start** → **Agent**: Initial conversation begins
+- **Agent** → **End**: Agent can conclude the conversation
+- **Agent** → **Tools**: Agent can call support tools when needed
+- **Tools** → **Agent**: Tools return results back to agent for further processing
+
+This creates a flexible ReAct (Reasoning + Acting) loop where the agent can:
+1. Analyze customer messages
+2. Decide whether to use tools
+3. Process tool results
+4. Provide final responses or continue the conversation
+
+**Option A: Jupyter Notebook (Recommended)**
+```bash
+# Open the visualization notebook
+jupyter notebook notebooks/graph_visualization.ipynb
+```
+
+**Option B: Python Script**
+```bash
+# Run the visualization script
+python scripts/visualize_graph.py
+
+# Or test the exact code you provided
+python scripts/test_graph_viz.py
+```
+
+**Option C: Direct Code**
+```python
+from IPython.display import Image, display
+from src.support_agent.agent import graph
+
+try:
+    display(Image(graph.get_graph(xray=True).draw_mermaid_png()))
+except Exception:
+    # This requires some extra dependencies and is optional
+    pass
+```
+
+**Required Dependencies for Visualization:**
+```bash
+pip install ipython pillow
+pip install 'langgraph[visualization]'
+```
+
 ### Debugging
 
 Use LangGraph Studio to:
