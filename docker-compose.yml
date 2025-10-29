@@ -1,32 +1,28 @@
-version: '3.8'
-
 services:
+  # NOTE: Using native Ollama (outside Docker) for Metal GPU acceleration
+  # Make sure Ollama is running natively: `ollama serve` or ensure it's running
+  # Native Ollama automatically uses Apple Silicon Metal GPU (MPS)
+
   # Customer support bot
   support-bot:
     build: .
     ports:
       - "8123:8123"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-    depends_on:
-      - ollama
+      # Connect to native Ollama on host (uses Metal GPU automatically)
+      # host.docker.internal works on macOS/Windows Docker Desktop
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
     volumes:
       - ./storage:/app/storage
+      - ./src:/app/src
+      - ./data:/app/data
     networks:
       - support-network
-
-  # Ollama service
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-    networks:
-      - support-network
+    restart: unless-stopped
 
 volumes:
   ollama-data:
+    driver: local
 
 networks:
   support-network:

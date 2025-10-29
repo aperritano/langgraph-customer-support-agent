@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 """Interactive CLI for customer support bot.
 
+WHAT THIS FILE DOES:
+Provides a command-line interface for interacting with the customer support agent.
+You can chat with the agent directly from your terminal, similar to a chat application.
+
+WHY IT'S IMPORTANT:
+Allows you to test and demo the agent without needing a web interface or API.
+Great for development, debugging, and demonstrating the agent's capabilities.
+
 Run: python scripts/cli.py
 """
 
@@ -8,7 +16,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-# Add src to path
+# Add src to path so we can import from the package
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from langchain_core.messages import HumanMessage
@@ -16,7 +24,16 @@ from src.support_agent import graph
 
 
 def print_banner():
-    """Print welcome banner."""
+    """
+    Print welcome banner.
+    
+    WHAT IT DOES:
+    Displays instructions to help users understand how to use the CLI.
+    
+    WHY IT'S IMPORTANT:
+    Without clear instructions, users wouldn't know what commands are available
+    or how to interact with the bot.
+    """
     print("\n" + "=" * 70)
     print("🛍️  CUSTOMER SUPPORT BOT - Interactive CLI")
     print("=" * 70)
@@ -29,7 +46,28 @@ def print_banner():
 
 
 async def run_cli():
-    """Run interactive CLI."""
+    """
+    Run interactive CLI.
+    
+    WHAT IT DOES:
+    Main interactive loop that:
+    1. Gets customer input from terminal
+    2. Sends it to the agent graph
+    3. Streams the agent's response back
+    4. Shows tool calls as they happen
+    5. Handles special commands (quit, new session, help)
+    
+    WHY IT'S IMPORTANT:
+    This is the user-facing interface. It orchestrates the conversation flow,
+    maintains session state (using thread_id), and provides real-time feedback
+    as the agent processes requests and uses tools.
+    
+    HOW IT WORKS:
+    - Uses asyncio for async operations (required by LangGraph's streaming)
+    - Maintains a session ID (thread_id) to preserve conversation context
+    - Streams responses so users see updates in real-time
+    - Shows tool usage so users understand what the agent is doing
+    """
     print_banner()
     
     # Get session ID

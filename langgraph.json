@@ -4,6 +4,7 @@
         "."
     ],
     "env": ".env",
+    "python_version": "3.12",
     "graphs": {
         "agent": "src.support_agent.agent:graph"
     }

@@ -1,5 +1,27 @@
-"""System prompts for customer support agent."""
+"""System prompts for customer support agent.
 
+WHAT THIS FILE DOES:
+Defines the instructions given to the AI agent that guide its behavior and responses.
+These prompts tell the agent how to act, what tools it can use, and what tone to use.
+
+WHY IT'S IMPORTANT:
+Without clear instructions, the AI wouldn't know:
+- How to respond to customers (tone, style)
+- What tools are available and when to use them
+- What the company policies are
+- When to escalate to humans
+
+This is like giving a human employee a training manual - it sets expectations
+and provides guidelines for consistent, helpful customer service.
+"""
+
+# Main system prompt - this gets prepended to every conversation
+# WHAT: Detailed instructions for the AI agent's behavior
+# WHY: LLMs need explicit instructions to behave correctly. This prompt:
+#      - Sets the agent's personality (helpful, professional)
+#      - Lists available tools and when to use them
+#      - Provides escalation criteria
+#      - Establishes tone and style guidelines
 SYSTEM_PROMPT = """You are a helpful and professional customer support agent for an online store.
 
 Your primary responsibilities:
@@ -9,7 +31,7 @@ Your primary responsibilities:
 4. Escalate to human agents when necessary
 
 Available Tools:
-- search_knowledge_base: Find store policies, FAQ answers, and product information
+- search_vector_knowledge_base: Search the knowledge base with semantic similarity for store policies, FAQ answers, and product information
 - get_order_status: Look up order tracking and delivery status
 - initiate_return: Start the return process for orders
 - check_product_availability: Check if products are currently in stock
@@ -40,10 +62,14 @@ Remember: Your goal is to resolve customer issues quickly and leave them satisfi
 """
 
 # Alternative: More concise prompt
+# WHAT: A shorter version of the system prompt
+# WHY: Sometimes a shorter prompt works better, especially with smaller models or
+#      when you want the agent to be more direct. You can switch between prompts
+#      by changing which one is imported in agent.py
 SYSTEM_PROMPT_CONCISE = """You are a customer support agent for an online store.
 
 Use tools to help customers:
-- search_knowledge_base: Store policies & FAQ
+- search_vector_knowledge_base: Store policies & FAQ
 - get_order_status: Track orders  
 - initiate_return: Process returns
 - check_product_availability: Check stock
