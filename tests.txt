@@ -1,0 +1,23 @@
+test_agent.py - 10 tests
+Tests for should_continue conditional routing logic
+Tests for agent_node message handling
+Tests for graph creation and compilation
+Integration tests for end-to-end flows (marked with @pytest.mark.integration)
+test_tools.py - 26 tests
+Tests for get_order_status (6 tests covering in-transit, delivered, processing, not found cases)
+Tests for initiate_return (6 tests covering defective vs regular returns)
+Tests for check_product_availability (6 tests covering stock statuses)
+Tests for escalate_to_human (5 tests covering different escalation scenarios)
+Tests for mock data integrity (3 tests)
+test_state.py - 14 tests
+Tests for state schema validation
+Tests for add_messages annotation behavior
+Tests for message type preservation
+Tests for conversation flow through states
+conftest.py - Pytest configuration
+Custom markers for integration vs unit tests
+Reusable fixtures for common test data
+README.md - Documentation
+How to run tests (all, unit only, integration only)
+Test coverage overview
+TDD guidelines for adding new tests

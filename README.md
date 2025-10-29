@@ -413,42 +413,112 @@ function Chat() {
 
 ## 🧪 Testing
 
-### Unit Tests
+The project includes a comprehensive TDD (Test-Driven Development) test suite with **50+ unit tests** covering all key functionality.
 
-```python
-# tests/test_tools.py
-from src.support_agent.tools import get_order_status
+### Test Structure
 
-def test_get_order_status():
-    result = get_order_status("123456")
-    assert "in_transit" in result.lower()
 ```
-
-### Integration Tests
-
-```python
-# tests/test_graph.py
-from src.support_agent import graph
-from langchain_core.messages import HumanMessage
-
-def test_full_conversation():
-    result = graph.invoke({
-        "messages": [HumanMessage(content="Check order #123456")]
-    })
-    assert len(result["messages"]) > 1
+src/support_agent/tests/
+├── test_agent.py       # Agent graph logic (10 tests)
+├── test_tools.py       # Support tools (26 tests)
+├── test_state.py       # State management (14 tests)
+├── conftest.py         # Pytest fixtures
+├── README.md          # Detailed test documentation
+└── QUICKSTART.md      # Quick reference guide
 ```
 
 ### Running Tests
 
+**IMPORTANT**: Activate the virtual environment first!
+
 ```bash
-# Run test conversations
+# Activate virtual environment
+source .venv/bin/activate
+
+# Run all unit tests (fast, no LLM required)
+pytest src/support_agent/tests/ -m "not integration"
+
+# Run all tests including integration tests (requires Ollama)
+pytest src/support_agent/tests/
+
+# Run with verbose output
+pytest src/support_agent/tests/ -v
+
+# Run specific test file
+pytest src/support_agent/tests/test_tools.py
+
+# Run specific test
+pytest src/support_agent/tests/test_tools.py::TestGetOrderStatus::test_get_order_status_in_transit
+```
+
+### Quick Test Script
+
+Use the provided test runner script:
+
+```bash
+./run_tests.sh
+```
+
+### Test Coverage
+
+- ✅ **Agent Logic**: Conditional routing, message handling, graph structure
+- ✅ **Tools**: Order status, returns, product availability, escalation
+- ✅ **State Management**: Message accumulation, type preservation, conversation flow
+- ✅ **Mock Data**: Data integrity and consistency
+
+### Example Unit Tests
+
+```python
+# test_tools.py - Test order status lookup
+def test_get_order_status_in_transit():
+    result = get_order_status.invoke({"order_id": "123456"})
+    assert "123456" in result
+    assert "in_transit" in result.lower()
+    assert "tracking" in result.lower()
+
+# test_agent.py - Test conditional routing
+def test_should_continue_with_tool_calls():
+    state = {
+        "messages": [
+            AIMessage(content="", tool_calls=[{"name": "get_order_status"}])
+        ]
+    }
+    result = should_continue(state)
+    assert result == "tools"
+```
+
+### Integration Tests
+
+Integration tests marked with `@pytest.mark.integration` test end-to-end flows and require:
+- Ollama running with llama3.1:latest model
+- Longer execution time
+
+Skip integration tests for quick development:
+```bash
+pytest src/support_agent/tests/ -m "not integration"
+```
+
+### Legacy Test Scripts
+
+```bash
+# Run interactive test conversations
 python scripts/test_bot.py
 
-# Test vector store
+# Test vector store functionality
 python scripts/init_vector_store.py
-
-# Add your own tests in scripts/test_bot.py
 ```
+
+### Writing New Tests
+
+Follow TDD principles when adding features:
+
+1. **Write test first** - Define expected behavior
+2. **Run test** - Verify it fails (red)
+3. **Implement feature** - Make it work
+4. **Run test again** - Verify it passes (green)
+5. **Refactor** - Clean up while keeping tests green
+
+See [src/support_agent/tests/README.md](src/support_agent/tests/README.md) for detailed documentation.
 
 ## 🐳 Docker Option
 
