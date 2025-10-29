@@ -12,6 +12,7 @@ A complete, production-ready customer support agent built with:
 - ✅ REST API ready to use
 - ✅ Full documentation and examples
 - ✅ Vector store implementation for semantic search
+- ✅ LangSmith evaluation suite with online dashboard
 
 ## Features
 
@@ -22,6 +23,7 @@ A complete, production-ready customer support agent built with:
 - 🚀 **Local First**: Runs entirely on your machine with Ollama
 - 📊 **REST API**: Auto-generated endpoints via LangGraph Dev
 - 🔍 **Semantic Search**: Vector-based knowledge base search
+- 📊 **LangSmith Evals**: Automated testing with online dashboard
 
 ## Prerequisites
 
@@ -72,18 +74,39 @@ pip install langgraph-cli
 
 ### Step 3: Run It! (30 seconds)
 
-**Option A: Visual Interface (Recommended)**
+**Option A: LangGraph Studio (Recommended)**
 ```bash
 langgraph dev
 ```
 Then open: http://127.0.0.1:8123
 
-**Option B: Command Line**
+**Option B: Agent UI Interface**
+
+The Agent UI provides an interactive chat interface for testing your agent. To use it:
+
+1. Start the LangGraph server:
+```bash
+langgraph dev
+```
+
+2. Open the Agent UI in your browser:
+```
+http://localhost:8123
+```
+
+3. Click "Start Agent" to begin:
+
+![Agent UI Start](agent-ui-start.png)
+
+4. Enter your messages in the chat interface and interact with the customer support bot
+5. The UI shows tool calls and agent responses in real-time
+
+**Option C: Command Line**
 ```bash
 python scripts/cli.py
 ```
 
-**Option C: Run Tests**
+**Option D: Run Tests**
 ```bash
 python scripts/test_bot.py
 ```
@@ -172,13 +195,48 @@ Once running, try these example queries:
 
 ## Usage Examples
 
-### Using LangGraph Studio
+### Using the Agent UI Interface
+
+The Agent UI provides an interactive web interface to chat with your customer support bot:
+
+1. **Start the LangGraph server**:
+   ```bash
+   langgraph dev
+   ```
+
+2. **Open the Agent UI** in your browser:
+   ```
+   http://localhost:8123
+   ```
+
+3. **Start the conversation**:
+
+   ![Agent UI Start](agent-ui-start.png)
+
+   Click "Start Agent" or begin typing your message in the chat interface
+
+4. **Interact with the bot**:
+   - Type customer queries in the chat input
+   - Watch the agent respond in real-time
+   - See tool calls as they happen
+   - View the conversation history
+
+5. **Features of the UI**:
+   - Real-time streaming responses
+   - Tool call visibility
+   - Conversation persistence
+   - Clean, intuitive interface
+
+### Using LangGraph Studio (Advanced Debugging)
+
+For advanced debugging and visualization:
 
 1. Start server: `langgraph dev`
 2. Open http://127.0.0.1:8123
 3. Type messages in the chat interface
 4. Watch tool calls happen in real-time
 5. Inspect state at each step
+6. Set breakpoints and time-travel debug
 
 ### Using CLI
 
@@ -520,15 +578,215 @@ Follow TDD principles when adding features:
 
 See [src/support_agent/tests/README.md](src/support_agent/tests/README.md) for detailed documentation.
 
-## 🐳 Docker Option
+## 🐳 Docker Setup (Recommended for Quick Start)
 
-If you prefer Docker:
+The easiest way to get started! Everything is pre-configured and ready to run.
 
+### Quick Start with Docker
+
+**Prerequisites:**
+- Docker and Docker Compose installed ([Get Docker](https://docs.docker.com/get-docker/))
+- That's it! No need to install Python, Ollama, or any dependencies manually
+
+**Start Everything:**
 ```bash
+# Clone the repository (if you haven't already)
+git clone <repository-url>
+cd langgraph-customer-support-agent
+
+# Start all services (first run will take 5-10 minutes to download models)
 docker-compose up
 ```
 
-This starts both the bot and Ollama in containers.
+**What happens automatically:**
+1. ✅ Ollama service starts
+2. ✅ Downloads llama3.2:3b model (happens once, ~2GB)
+3. ✅ Support bot starts and connects to Ollama
+4. ✅ API ready at http://localhost:8123
+
+**Access the application:**
+- Agent UI Interface: http://localhost:8123
+- Ollama API: http://localhost:11434
+
+### Using Agent UI with Docker
+
+Once Docker is running, access the Agent UI interface:
+
+1. **Start the Docker containers**:
+   ```bash
+   docker-compose up
+   ```
+   Wait for the message: "Ollama initialization complete!"
+
+2. **Access the Agent UI** in your browser:
+   ```
+   http://localhost:8123
+   ```
+
+3. **Start chatting**:
+
+   ![Agent UI Start](agent-ui-start.png)
+
+   Click "Start Agent" and begin interacting with your customer support bot
+
+### Docker Commands
+
+```bash
+# Start in background (detached mode)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f support-bot
+docker-compose logs -f ollama
+docker-compose logs ollama-init
+
+# Stop all services
+docker-compose down
+
+# Stop and remove all data (including downloaded models)
+docker-compose down -v
+
+# Rebuild after code changes
+docker-compose up --build
+
+# Use a different model
+OLLAMA_MODEL=mistral:7b docker-compose up
+```
+
+### Docker Architecture
+
+The setup includes three services:
+
+1. **ollama** - Ollama service for running LLMs
+   - Automatically starts and stays healthy
+   - Models stored in persistent volume
+   - Accessible at http://ollama:11434 (internal) and http://localhost:11434 (external)
+
+2. **ollama-init** - One-time model initialization
+   - Automatically pulls llama3.2:3b model on first run
+   - Ensures model is ready before starting the bot
+   - Exits after successful initialization
+
+3. **support-bot** - The LangGraph customer support agent
+   - Starts only after Ollama and model are ready
+   - Hot-reload enabled for development (code changes auto-reload)
+   - Exposes API on port 8123
+
+### Benefits of Docker Setup
+
+✅ **Zero Configuration** - Everything just works out of the box
+✅ **Consistent Environment** - Same setup on any OS (Mac, Linux, Windows)
+✅ **Isolated** - Won't conflict with your system Python/Ollama installations
+✅ **Easy Cleanup** - Remove everything with one command
+✅ **Production Ready** - Same setup works for dev and production
+✅ **Hot Reload** - Code changes automatically reload in the container
+
+The Docker setup automatically configures:
+- LangGraph server on port 8123
+- Ollama service with llama3.2:3b model pre-loaded
+- Persistent storage for conversation history
+- Network connectivity between all services
+- Volume mounts for live code editing
+
+### Customizing the Docker Setup
+
+**Change the model:**
+
+Edit [docker-compose.yml](docker-compose.yml):
+```yaml
+ollama-init:
+  environment:
+    - OLLAMA_HOST=http://ollama:11434
+    - OLLAMA_MODEL=mistral:7b  # Change this line
+```
+
+Available models:
+- `llama3.2:1b` - Smallest, fastest (~1GB RAM)
+- `llama3.2:3b` - Recommended, good balance (~3GB RAM)
+- `mistral:7b` - More capable (~5GB RAM)
+- `llama3.1:8b` - Largest, most capable (~7GB RAM)
+
+**Development mode with hot reload:**
+
+The docker-compose.yml already mounts source directories:
+```yaml
+volumes:
+  - ./src:/app/src        # Code changes reload automatically
+  - ./data:/app/data      # Knowledge base changes
+  - ./storage:/app/storage # Persistent conversation history
+```
+
+Just edit your code locally and it will reload automatically in the container!
+
+### Troubleshooting Docker
+
+**Issue: Slow first startup**
+- This is normal! First run downloads the Ollama model (~2GB)
+- Subsequent starts are much faster (5-10 seconds)
+- Check progress: `docker-compose logs -f ollama-init`
+
+**Issue: Port already in use**
+```bash
+# Change ports in docker-compose.yml
+services:
+  support-bot:
+    ports:
+      - "8124:8123"  # Use port 8124 instead of 8123
+```
+
+**Issue: Out of memory**
+- Ollama models need 4-8GB RAM available
+- Free up memory or use a smaller model (llama3.2:1b)
+- Check Docker Desktop settings to allocate more RAM
+
+**Issue: Model download fails**
+```bash
+# Check internet connection and logs
+docker-compose logs ollama-init
+
+# Manually pull model
+docker-compose exec ollama ollama pull llama3.2:3b
+
+# Restart services
+docker-compose restart
+```
+
+**Issue: Container won't start**
+```bash
+# Check container status
+docker-compose ps
+
+# View detailed logs
+docker-compose logs
+
+# Clean restart
+docker-compose down
+docker-compose up --build
+```
+
+**Issue: Changes not reflecting**
+```bash
+# For Dockerfile changes, force rebuild:
+docker-compose down
+docker-compose up --build
+
+# For Python code changes, just restart the service:
+docker-compose restart support-bot
+
+# Note: Volume-mounted files (src/, data/) should auto-reload
+```
+
+**Issue: Can't connect to Ollama**
+```bash
+# Check if Ollama service is healthy
+docker-compose ps
+
+# Test Ollama directly
+curl http://localhost:11434/api/tags
+
+# Check network connectivity between containers
+docker-compose exec support-bot curl http://ollama:11434/api/tags
+```
 
 ## 🆘 Troubleshooting
 
@@ -935,6 +1193,64 @@ results = vector_store.search("shipping options", k=2, filter_category="shipping
 ```bash
 python scripts/init_vector_store.py
 ```
+
+## Testing & Evaluation
+
+### Unit Tests
+
+Run the comprehensive test suite (50+ tests):
+
+```bash
+source .venv/bin/activate
+pytest src/support_agent/tests/ -m "not integration"
+```
+
+See [QUICKSTART.md](src/support_agent/tests/QUICKSTART.md) for detailed testing instructions.
+
+### LangSmith Evaluations
+
+Evaluate your agent's performance with automated testing that shows up in an online dashboard.
+
+#### Quick Start
+
+1. **Setup LangSmith**:
+   ```bash
+   export LANGCHAIN_API_KEY="your-key-from-smith.langchain.com"
+   export LANGCHAIN_TRACING_V2=true
+   ```
+
+2. **Check Setup**:
+   ```bash
+   python check_langsmith_setup.py
+   ```
+
+3. **Run Evaluation**:
+   ```bash
+   python -m src.support_agent.tests.eval_langsmith
+   ```
+
+#### What You Get
+
+- **Dataset**: 10 test cases covering various customer scenarios
+- **Evaluators**: 3 automated metrics (tool usage, keyword presence, response quality)
+- **Online Dashboard**: View results at https://smith.langchain.com
+- **Traces**: Detailed execution traces for debugging
+
+Example output:
+```
+Average Scores:
+  - tool_usage          : 90.00%
+  - keyword_presence    : 85.00%
+  - response_quality    : 100.00%
+
+View results: https://smith.langchain.com/projects
+```
+
+#### Documentation
+
+- [Complete Evaluation Guide](src/support_agent/tests/LANGSMITH_EVAL_GUIDE.md) - Full documentation
+- [Example Output](EXAMPLE_LANGSMITH_OUTPUT.md) - What to expect in LangSmith
+- [Evaluation Script](src/support_agent/tests/eval_langsmith.py) - Customizable evaluation code
 
 ## Development
 

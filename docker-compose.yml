@@ -1,21 +1,7 @@
 version: '3.8'
 
 services:
-  # Customer support bot
-  support-bot:
-    build: .
-    ports:
-      - "8123:8123"
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-    depends_on:
-      - ollama
-    volumes:
-      - ./storage:/app/storage
-    networks:
-      - support-network
-
-  # Ollama service
+  # Ollama service (must start first)
   ollama:
     image: ollama/ollama:latest
     ports:
@@ -24,9 +10,49 @@ services:
       - ollama-data:/root/.ollama
     networks:
       - support-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Initialize Ollama with required model
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./scripts/init-ollama.sh:/init-ollama.sh
+    networks:
+      - support-network
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["/bin/sh", "/init-ollama.sh"]
+    restart: "no"
+
+  # Customer support bot
+  support-bot:
+    build: .
+    ports:
+      - "8123:8123"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./storage:/app/storage
+      - ./src:/app/src
+      - ./data:/app/data
+    networks:
+      - support-network
+    restart: unless-stopped
 
 volumes:
   ollama-data:
+    driver: local
 
 networks:
   support-network:

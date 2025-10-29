@@ -1,17 +1,27 @@
 # Support Agent Tests
 
-This directory contains TDD (Test-Driven Development) tests for the customer support agent implementation.
+This directory contains comprehensive testing and evaluation tools for the customer support agent.
+
+## Quick Links
+
+- **[QUICKSTART.md](QUICKSTART.md)** - How to run unit tests
+- **[LANGSMITH_EVAL_GUIDE.md](LANGSMITH_EVAL_GUIDE.md)** - LangSmith evaluation guide
+- **[eval_langsmith.py](eval_langsmith.py)** - Evaluation script
 
 ## Test Structure
 
 ```
 tests/
-├── __init__.py           # Package initialization
-├── conftest.py           # Pytest configuration and fixtures
-├── test_agent.py         # Tests for agent graph logic
-├── test_tools.py         # Tests for support tools
-├── test_state.py         # Tests for state management
-└── README.md            # This file
+├── __init__.py                   # Package initialization
+├── conftest.py                   # Pytest configuration and fixtures
+├── test_agent.py                 # Tests for agent graph logic
+├── test_tools.py                 # Tests for support tools
+├── test_state.py                 # Tests for state management
+│
+├── eval_langsmith.py             # LangSmith evaluation script ⭐
+├── LANGSMITH_EVAL_GUIDE.md       # Complete evaluation documentation
+├── QUICKSTART.md                 # Quick start for running tests
+└── README.md                     # This file
 ```
 
 ## Test Categories
@@ -23,6 +33,13 @@ tests/
 
 ### Integration Tests (Slower, require LLM)
 - **test_agent.py** (marked with `@pytest.mark.integration`): Full graph execution tests
+
+### LangSmith Evaluations (Online Dashboard)
+- **eval_langsmith.py**: Run agent against dataset and view results online
+  - 10 test cases covering various scenarios
+  - 3 automated evaluators (tool usage, keyword presence, response quality)
+  - Results visible at https://smith.langchain.com
+  - See [LANGSMITH_EVAL_GUIDE.md](LANGSMITH_EVAL_GUIDE.md) for details
 
 ## Setup
 

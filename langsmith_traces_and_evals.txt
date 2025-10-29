@@ -1,0 +1,9 @@
+example trace:
+https://smith.langchain.com/public/b233ecaf-22e7-40b3-af28-d6d39c2a5d53/r
+
+https://smith.langchain.com/public/ae6fc285-f2ca-4383-a8c0-1d46f02f6be6/r
+
+https://smith.langchain.com/public/a64614de-af7e-42e2-8004-8908a5d5e557/r
+
+
+
