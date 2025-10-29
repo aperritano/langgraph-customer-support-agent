@@ -1592,13 +1592,6 @@ docker build -t support-bot .
 docker run -p 2024:2024 support-bot
 ```
 
-### LangGraph Cloud
-
-```bash
-# Deploy to LangGraph Cloud
-langgraph deploy
-```
-
 ## Common Patterns
 
 ### Adding Sentiment Analysis
@@ -1638,7 +1631,7 @@ def should_follow_up(state: SupportState) -> str:
 
 ## Next Steps
 
-- [x] Add RAG with vector database (ChromaDB) - ✅ Already implemented!
+- [ ] Add RAG with vector database (ChromaDB)
 - [ ] Integrate with real order management system
 - [ ] Add sentiment analysis for escalation
 - [ ] Create web UI with React
