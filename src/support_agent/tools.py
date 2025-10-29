@@ -261,6 +261,108 @@ Would you like me to help you find something similar, or would you like to speak
 
 
 @tool
+def search_vector_knowledge_base(
+    query: str,
+    max_results: int = 5,
+    min_similarity_score: float = 0.0,
+    categories: str = ""
+) -> str:
+    """Advanced vector search across the knowledge base with similarity scoring.
+
+    Use this tool for complex queries that need:
+    - Semantic similarity matching (finds conceptually related content)
+    - Filtering by relevance scores
+    - Multi-category search
+    - More comprehensive results than basic search
+
+    This is more powerful than search_knowledge_base for:
+    - Complex customer questions requiring multiple information sources
+    - Finding related information across different policy areas
+    - When you need to see relevance scores to judge information quality
+    - Broader searches that might span multiple categories
+
+    Args:
+        query: The customer's question or search terms (uses semantic similarity)
+        max_results: Maximum number of results to return (1-10, default: 5)
+        min_similarity_score: Minimum similarity score threshold 0.0-1.0 (default: 0.0)
+                             Higher values = stricter matching. Typical values:
+                             - 0.0: Return all results (most permissive)
+                             - 0.3: Somewhat related content
+                             - 0.5: Moderately related content
+                             - 0.7: Highly related content (strictest)
+        categories: Comma-separated list of categories to search (optional).
+                   Valid categories: product, shipping, return, payment, general
+                   Example: "return,payment" searches only those categories
+                   Leave empty to search all categories
+
+    Returns:
+        Formatted search results with similarity scores and source categories
+    """
+    # Get vector store instance
+    vector_store = get_vector_store()
+
+    # Validate and constrain max_results
+    max_results = max(1, min(10, max_results))
+
+    # Validate similarity score
+    min_similarity_score = max(0.0, min(1.0, min_similarity_score))
+
+    # Parse categories filter
+    category_list = []
+    if categories and categories.strip():
+        category_list = [cat.strip().lower() for cat in categories.split(",")]
+        valid_categories = {"product", "shipping", "return", "payment", "general"}
+        category_list = [cat for cat in category_list if cat in valid_categories]
+
+    # Perform search with filters
+    results = vector_store.search_with_scores(
+        query=query,
+        k=max_results,
+        filter_categories=category_list if category_list else None,
+        score_threshold=min_similarity_score
+    )
+
+    if not results:
+        filter_info = f" (filtered by: {', '.join(category_list)})" if category_list else ""
+        score_info = f" with minimum score {min_similarity_score}" if min_similarity_score > 0 else ""
+        return f"No relevant information found{filter_info}{score_info}.\n\nTry:\n- Broader search terms\n- Lower similarity threshold\n- Removing category filters"
+
+    # Format results with scores and metadata
+    formatted_results = ["Vector Knowledge Base Search Results:\n"]
+    formatted_results.append(f"Query: '{query}'\n")
+
+    if category_list:
+        formatted_results.append(f"Categories: {', '.join(category_list)}")
+    if min_similarity_score > 0:
+        formatted_results.append(f"Min Similarity: {min_similarity_score:.2f}")
+
+    formatted_results.append(f"\nFound {len(results)} relevant result(s):\n")
+    formatted_results.append("-" * 60)
+
+    for i, (doc, score) in enumerate(results, 1):
+        category = doc.metadata.get("category", "unknown")
+        doc_type = doc.metadata.get("type", "unknown")
+
+        # Visual indicators for relevance
+        if score >= 0.7:
+            relevance = "🎯 High"
+        elif score >= 0.5:
+            relevance = "✓ Medium"
+        elif score >= 0.3:
+            relevance = "~ Low"
+        else:
+            relevance = "? Very Low"
+
+        formatted_results.append(f"\nResult #{i} | Relevance: {relevance} ({score:.3f})")
+        formatted_results.append(f"Category: {category.title()} | Type: {doc_type}")
+        formatted_results.append("-" * 60)
+        formatted_results.append(doc.page_content.strip())
+        formatted_results.append("-" * 60)
+
+    return "\n".join(formatted_results)
+
+
+@tool
 def escalate_to_human(reason: str, customer_message: str) -> str:
     """Escalate the conversation to a human support agent.
     
@@ -329,6 +431,7 @@ Is there anything else I can assist you with?"""
 # Export all tools as a list for easy import
 tools = [
     search_knowledge_base,
+    search_vector_knowledge_base,
     get_order_status,
     initiate_return,
     check_product_availability,

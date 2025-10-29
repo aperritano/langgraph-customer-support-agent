@@ -201,6 +201,57 @@ Answer: {faq.get('answer', '')}
 
         return "\n\n".join(formatted_results)
 
+    def search_with_scores(
+        self,
+        query: str,
+        k: int = 5,
+        filter_categories: Optional[list[str]] = None,
+        score_threshold: float = 0.0
+    ) -> list[tuple[Document, float]]:
+        """Search the knowledge base with similarity scores.
+
+        Args:
+            query: Search query
+            k: Number of results to return
+            filter_categories: Optional list of categories to filter by
+            score_threshold: Minimum similarity score (0.0 to 1.0)
+
+        Returns:
+            List of (Document, score) tuples sorted by relevance
+        """
+        if self.vector_store is None:
+            return []
+
+        # Perform similarity search with scores
+        if filter_categories:
+            # Create filter function for multiple categories
+            def metadata_filter(doc: Document) -> bool:
+                return doc.metadata.get("category") in filter_categories
+
+            results = self.vector_store.similarity_search_with_score(
+                query,
+                k=k,
+                filter=metadata_filter
+            )
+        else:
+            results = self.vector_store.similarity_search_with_score(query, k=k)
+
+        # Filter by score threshold and return
+        # Note: Lower scores mean higher similarity in some implementations
+        # InMemoryVectorStore returns distance, so lower is better
+        # We convert to similarity score (higher is better) for consistency
+        filtered_results = []
+        for doc, distance in results:
+            # Convert distance to similarity (assuming cosine distance)
+            # For normalized embeddings with cosine similarity:
+            # similarity = 1 - distance
+            similarity = 1.0 - distance
+
+            if similarity >= score_threshold:
+                filtered_results.append((doc, similarity))
+
+        return filtered_results
+
 
 # Global instance - initialized lazily
 _vector_store_instance: Optional[KnowledgeBaseVectorStore] = None
