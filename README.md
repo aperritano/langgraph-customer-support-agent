@@ -1,4 +1,75 @@
-# Customer Support Bot
+
+# Building an Intelligent Customer Support Agent: A Journey Through the LangChain Ecosystem
+
+## Introduction
+
+Imagine a customer service agent that never sleeps, responds instantly to inquiries about orders and refunds, knows when to escalate complex issues to humans, and continuously improves through rigorous evaluation. This project brings that vision to life as a demonstration of the LangChain ecosystem's capabilities for building production-ready AI agents.
+
+At its heart, this is a story about learning by doing—exploring the vast landscape of agent architectures, tooling, and evaluation frameworks while keeping one principle paramount: **simplicity first**.
+
+## Design Philosophy: Keep It Simple
+
+Rather than building a sprawling multi-agent system from the outset, this project embraces an intentionally straightforward architecture. The customer support agent serves as a focused exploration of core concepts: tool usage, knowledge retrieval, human-in-the-loop patterns, and comprehensive testing. By mastering these fundamentals, we create a solid foundation for future complexity.
+
+### The Agent's Journey
+
+When a customer reaches out with a question, the agent springs into action. It searches through a vector database containing company policies and retrieves relevant customer data from mock databases. Armed with this context, it responds to inquiries about orders, refunds, and account issues. But here's the crucial part: the agent knows its limits. When an issue requires human judgment or escalation, it gracefully interrupts the workflow to create a support ticket, ensuring customers get the care they need.
+
+![Agent Workflow Graph](images/langgraph-graph-mermaid.png)
+
+*The agent's workflow: a clean cycle between reasoning, tool usage, and knowing when to stop or escalate.*
+
+### Architecture in Action
+
+The system architecture reflects real-world production considerations:
+
+- **Knowledge Layer**: Vector database for policy documents and mock customer data stores
+- **Intelligence Layer**: Powered by Ollama's `llama3.2:1b` model for local, cost-effective inference
+- **Interface Layer**: LangChain Studio and Agent UI provide a streaming chat experience
+- **Quality Assurance**: Comprehensive TDD tests ensure reliability
+- **Deployment**: Docker configuration for consistent environments across development and production
+
+![Agent Chat Interface](images/agent-ui-start.png)
+
+*The Agent Chat UI: a simple, clean interface for interacting with the customer support agent via localhost deployment.*
+
+### Rigorous Evaluation Framework
+
+Quality isn't accidental—it's measured. The evaluation system puts the agent through its paces with 10 diverse customer scenarios, scoring responses across five dimensions:
+
+1. **Tool Usage**: Does the agent call the right functions?
+2. **Keyword Presence**: Are critical terms and information included?
+3. **Response Quality**: Is the answer accurate and complete?
+4. **Empathy**: Does the agent acknowledge customer concerns?
+5. **Actionability**: Can the customer act on the guidance provided?
+
+Every evaluation run uploads detailed results to the [LangSmith dashboard](https://smith.langchain.com), complete with conversation traces, per-test feedback explaining pass/fail decisions, and aggregate scores. This creates a feedback loop for continuous improvement and regression detection.
+
+![LangSmith Test Examples](images/eval-summary-examples.png)
+
+*The evaluation dataset: 10 diverse customer scenarios testing everything from frustrated complaints to simple inventory questions.*
+
+![LangSmith Evaluation Metrics](images/eval-summary-experiments.png)
+
+*Performance metrics across all evaluation dimensions, with aggregate scores showing how the agent performs on tool usage, response quality, empathy, and more.*
+
+**Running Evaluations**: Execute `python -m src.support_agent.tests.eval_langsmith` and view comprehensive metrics in LangSmith's web interface to track performance trends over time.
+
+## The Road Ahead
+
+This foundation opens doors to exciting possibilities:
+
+**Multi-Agent Workflows**: Evolve from a single agent to a supervised ensemble where specialized agents handle distinct business processes—one for refunds, another for order modifications, each an expert in its domain. A primary assistant would orchestrate these specialists, routing requests to the right team member.
+
+**Enhanced Human Collaboration**: Implement more sophisticated interrupt patterns for confirmations and executions, creating seamless handoffs between AI and human agents.
+
+**Enterprise Data Integration**: Replace mock data with SQL-based customer databases, connecting the agent to real business systems and workflows.
+
+The journey from simple to sophisticated is just beginning—but the foundation is rock solid.
+
+For detailed developer setup instructions, see [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md).
+
+# Customer Support Bot Technical Documentation
 
 A production-ready customer support agent built with LangGraph, featuring intelligent tool calling, conversation memory, and local LLM support via Ollama.
 
@@ -29,7 +100,7 @@ A complete, production-ready customer support agent built with:
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.11-3.12 (3.12 recommended)
 - [Ollama](https://ollama.ai) installed and running
 - Node.js/pnpm (optional, for TypeScript projects)
 
@@ -66,11 +137,11 @@ ollama pull llama3.2:1b
 cd langgraph-customer-support-agent
 
 # Create virtual environment
-python -m venv venv
+python -m venv .venv
 
 # Activate it
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate     # Windows
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate      # Windows
 
 # Install dependencies
 pip install -r requirements.txt
@@ -128,7 +199,7 @@ python scripts/test_bot.py
 langgraph-customer-support-agent/
 ├── 📖 Documentation
 │   ├── README.md                  # This file - complete documentation
-│   ├── LICENSE                    # MIT License
+│   ├── DEVELOPER_SETUP.md         # Developer setup guide
 │   └── .gitignore                # Git ignore patterns
 │
 ├── 🐍 Python Application
@@ -320,9 +391,7 @@ src/support_agent/tests/
 ├── test_state.py       # State management (14 tests)
 ├── conftest.py         # Pytest fixtures
 ├── eval_langsmith.py   # LangSmith evaluation script
-├── custom_evaluators.py # Custom evaluators (7 available)
-├── README.md          # Detailed test documentation
-└── QUICKSTART.md      # Quick reference guide
+└── custom_evaluators.py # Custom evaluators (7 available)
 ```
 
 ### Running Tests
@@ -331,7 +400,8 @@ src/support_agent/tests/
 
 ```bash
 # Activate virtual environment
-source venv/bin/activate
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate     # Windows
 
 # Run all unit tests (fast, no LLM required)
 pytest src/support_agent/tests/ -m "not integration"
@@ -354,7 +424,7 @@ pytest src/support_agent/tests/test_tools.py::TestGetOrderStatus::test_get_order
 Use the provided test runner script:
 
 ```bash
-./run_tests.sh
+./scripts/run_tests.sh
 ```
 
 ### Test Coverage
@@ -434,7 +504,7 @@ Evaluate your agent's performance with automated testing that shows up in an onl
 2. **Check Setup**:
 
    ```bash
-   python check_langsmith_setup.py
+   python scripts/check_langsmith_setup.py
    ```
 
 3. **Run Evaluation**:
@@ -468,6 +538,7 @@ View results: https://smith.langchain.com/projects
 The evaluation system includes **5 active evaluators** and **7 additional custom evaluators**:
 
 #### Currently Active (5 evaluators)
+
 1. ✅ **Tool Usage** - Checks if correct tool was called
 2. ✅ **Keyword Presence** - Verifies expected info in response
 3. ✅ **Response Quality** - Checks completeness and formatting
@@ -475,6 +546,7 @@ The evaluation system includes **5 active evaluators** and **7 additional custom
 5. ✅ **Actionability** - Ensures response provides clear next steps
 
 #### Ready to Activate (7 more)
+
 6. **Politeness** - Checks for courtesy and professional tone
 7. **Conciseness** - Evaluates appropriate response length
 8. **Specificity** - Prefers specific details over generic statements
@@ -553,7 +625,7 @@ def my_evaluator(run: Run, example: Example) -> dict:
         }
 ```
 
-See `src/support_agent/tests/CUSTOM_EVALUATORS_GUIDE.md` for detailed documentation.
+See `src/support_agent/tests/custom_evaluators.py` for implementation examples and detailed comments.
 
 ## 🔧 Customization
 
@@ -943,7 +1015,7 @@ docker-compose exec support-bot curl http://ollama:11434/api/tags
 
 #### Python Version Error
 
-**Error**: `requires-python = ">=3.11"`
+**Error**: `requires-python = ">=3.11,<3.13"`
 
 **Solution**:
 
@@ -951,14 +1023,15 @@ docker-compose exec support-bot curl http://ollama:11434/api/tags
 # Check your Python version
 python --version
 
-# If < 3.11, install newer Python
+# Must be Python 3.11 or 3.12 (3.12 recommended)
+# If version is < 3.11 or >= 3.13, install Python 3.12
 # macOS:
-brew install python@3.11
+brew install python@3.12
 
 # Linux:
-sudo apt install python3.11
+sudo apt install python3.12
 
-# Windows: Download from python.org
+# Windows: Download Python 3.12 from python.org
 ```
 
 #### ModuleNotFoundError
@@ -969,8 +1042,8 @@ sudo apt install python3.11
 
 ```bash
 # Make sure virtual environment is activated
-source venv/bin/activate  # macOS/Linux
-venv\Scripts\activate     # Windows
+source .venv/bin/activate  # macOS/Linux
+.venv\Scripts\activate     # Windows
 
 # Reinstall dependencies
 pip install -r requirements.txt

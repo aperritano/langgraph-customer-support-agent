@@ -4,7 +4,7 @@ Quick setup checker for LangSmith evaluations.
 
 Run this before running the evaluation to ensure everything is configured correctly.
 
-Usage: python check_langsmith_setup.py
+Usage: python scripts/check_langsmith_setup.py
 """
 
 import os

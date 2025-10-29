@@ -47,7 +47,7 @@ echo "Running Setup Checker"
 echo "========================================================================"
 echo ""
 
-python check_langsmith_setup.py
+python scripts/check_langsmith_setup.py
 
 if [ $? -ne 0 ]; then
     echo ""
