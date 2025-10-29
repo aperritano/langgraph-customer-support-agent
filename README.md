@@ -65,6 +65,8 @@ Every evaluation run uploads detailed results to the [LangSmith dashboard](https
 
 This foundation opens doors to exciting possibilities:
 
+**Live Customer Data**: Implement it to read/edit a database of customer data - postgres or SQLite.
+
 **Multi-Agent Workflows**: Evolve from a single agent to a supervised ensemble where specialized agents handle distinct business processes—one for refunds, another for order modifications, each an expert in its domain. A primary assistant would orchestrate these specialists, routing requests to the right team member.
 
 **Enhanced Human Collaboration**: Implement more sophisticated interrupt patterns for confirmations and executions, creating seamless handoffs between AI and human agents.
