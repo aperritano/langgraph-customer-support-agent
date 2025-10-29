@@ -96,7 +96,7 @@ A complete, production-ready customer support agent built with:
 ## Features
 
 - 🤖 **Intelligent Agent**: Uses ReAct pattern with tool calling
-- 💬 **Multi-turn Conversations**: Built-in memory with SQLite
+- 💬 **Multi-turn Conversations**: Built-in memory
 - 🔧 **5 Support Tools**: Knowledge base, order tracking, returns, inventory, escalation
 - 🎨 **LangGraph Studio**: Visual debugging and testing UI
 - 🚀 **Local First**: Runs entirely on your machine with Ollama
