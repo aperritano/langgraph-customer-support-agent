@@ -1,0 +1,103 @@
+{
+  "knowledge_base": {
+    "policies": {
+      "returns": {
+        "time_limit": "30 days",
+        "condition": "unused, original packaging, with tags",
+        "refund_time": "5-7 business days",
+        "return_shipping": {
+          "defective": "free",
+          "other": "$7.99 deducted from refund"
+        }
+      },
+      "shipping": {
+        "standard": {
+          "time": "5-7 business days",
+          "cost": "Free on orders over $50"
+        },
+        "express": {
+          "time": "2-3 business days",
+          "cost": "$15"
+        },
+        "overnight": {
+          "time": "Next business day",
+          "cost": "$25"
+        }
+      },
+      "warranty": {
+        "standard": "30 days",
+        "coverage": "manufacturing defects",
+        "extended_available": true
+      },
+      "payment": {
+        "methods": ["Visa", "Mastercard", "Amex", "Discover", "PayPal"],
+        "processor": "Stripe",
+        "security": "industry-standard encryption"
+      }
+    },
+    "products": {
+      "categories": [
+        "Electronics",
+        "Laptops & Computers",
+        "Computer Accessories",
+        "Audio Equipment",
+        "Peripherals"
+      ],
+      "top_products": [
+        {
+          "name": "Wireless Headphones Pro",
+          "price": "$149.99",
+          "features": ["Noise cancelling", "30hr battery", "Premium sound"]
+        },
+        {
+          "name": "Mechanical Gaming Keyboard",
+          "price": "$89.99",
+          "features": ["RGB lighting", "Cherry MX switches", "Programmable"]
+        },
+        {
+          "name": "Ergonomic Mouse",
+          "price": "$39.99",
+          "features": ["Wireless", "6 buttons", "2400 DPI"]
+        }
+      ]
+    },
+    "faq": [
+      {
+        "question": "How do I track my order?",
+        "answer": "You'll receive a tracking number via email once your order ships. You can also check your order status by providing your order number."
+      },
+      {
+        "question": "Can I modify my order?",
+        "answer": "Yes, you can modify your order within 1 hour of placing it. Contact support with your order number."
+      },
+      {
+        "question": "Do you price match?",
+        "answer": "Yes, we offer price matching on identical items from authorized retailers. Contact us with proof of the lower price."
+      },
+      {
+        "question": "Is gift wrapping available?",
+        "answer": "Yes, gift wrapping with custom messages is available for $5 per item at checkout."
+      },
+      {
+        "question": "What are your business hours?",
+        "answer": "Customer support is available Monday-Friday, 9 AM - 6 PM EST."
+      }
+    ]
+  },
+  "order_statuses": {
+    "processing": "Order is being prepared for shipment",
+    "in_transit": "Order has shipped and is on its way",
+    "delivered": "Order has been delivered",
+    "cancelled": "Order has been cancelled",
+    "returned": "Order has been returned"
+  },
+  "escalation_reasons": [
+    "customer_frustrated",
+    "customer_angry",
+    "complex_issue",
+    "requires_manual_review",
+    "explicit_request",
+    "repeated_question",
+    "policy_exception_needed"
+  ]
+}

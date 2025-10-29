@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Customer support bot
+  support-bot:
+    build: .
+    ports:
+      - "8123:8123"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    volumes:
+      - ./storage:/app/storage
+    networks:
+      - support-network
+
+  # Ollama service
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - support-network
+
+volumes:
+  ollama-data:
+
+networks:
+  support-network:
+    driver: bridge

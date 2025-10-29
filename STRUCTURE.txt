@@ -1,0 +1,88 @@
+customer-support-bot/
+│
+├── 📖 Documentation (Read First!)
+│   ├── START_HERE.md              ⭐ BEGIN HERE - Quick start guide
+│   ├── README.md                  📘 Full documentation
+│   ├── QUICKSTART.md              🚀 5-minute setup
+│   ├── PROJECT_STRUCTURE.md       📁 File explanations
+│   ├── CONTRIBUTING.md            🔧 How to customize
+│   └── TROUBLESHOOTING.md         🆘 Common issues
+│
+├── 🐍 Python Application
+│   ├── src/support_agent/         ⚙️ Main application code
+│   │   ├── __init__.py           
+│   │   ├── agent.py              🎯 CORE: Graph definition
+│   │   ├── tools.py              🔧 5 support tools
+│   │   ├── state.py              💾 State schema
+│   │   └── prompts.py            💬 System instructions
+│   │
+│   └── scripts/                   🎬 Ready-to-run scripts
+│       ├── cli.py                 💻 Interactive chat
+│       ├── test_bot.py            🧪 Test suite
+│       └── api_client_example.py  📡 API examples
+│
+├── 📊 Data
+│   └── data/
+│       └── knowledge_base.json    📚 Mock KB data
+│
+├── ⚙️ Configuration
+│   ├── langgraph.json             🔗 LangGraph config (required!)
+│   ├── pyproject.toml             📦 Project metadata
+│   ├── requirements.txt           📋 Dependencies
+│   ├── .env.example               🔐 Environment template
+│   └── .gitignore                 🚫 Git ignore rules
+│
+├── 🐳 Docker (Optional)
+│   ├── Dockerfile                 📦 Container image
+│   └── docker-compose.yml         🎼 Multi-container setup
+│
+└── 📄 Legal
+    └── LICENSE                     ⚖️ MIT License
+
+📊 Project Stats:
+- 23 files total
+- 1,276 lines of Python code
+- 1,639 lines of documentation
+- 5 working tools
+- 3 runnable scripts
+- 6 documentation files
+
+🚀 Quick Start Commands:
+$ langgraph dev                    # Visual interface
+$ python scripts/cli.py            # Command line
+$ python scripts/test_bot.py       # Run tests
+
+💡 Key Files:
+1. START_HERE.md                   ← Read this first!
+2. src/support_agent/agent.py      ← The core graph
+3. src/support_agent/tools.py      ← Where tools are defined
+4. scripts/cli.py                  ← Interactive testing
+
+🎯 What This Bot Can Do:
+✅ Answer policy questions (returns, shipping, warranty)
+✅ Track orders and delivery status
+✅ Process returns and refunds
+✅ Check product availability
+✅ Escalate to human agents
+✅ Remember conversation history
+✅ Use multiple tools in sequence
+
+🔧 Built With:
+- LangGraph 0.2+ (orchestration)
+- LangChain (framework)
+- Ollama (local LLM)
+- SQLite (memory/state)
+
+📖 Documentation Reading Order:
+1. START_HERE.md       - Get it running (3 min)
+2. QUICKSTART.md       - Detailed setup (5 min)
+3. PROJECT_STRUCTURE.md - Understand code (10 min)
+4. CONTRIBUTING.md     - Learn to extend (15 min)
+5. TROUBLESHOOTING.md  - Fix issues (as needed)
+
+🎓 Learning Path:
+Beginner:  START_HERE → QUICKSTART → Try CLI
+Developer: PROJECT_STRUCTURE → agent.py → tools.py
+Advanced:  CONTRIBUTING → Customize everything!
+
+Happy coding! 🚀
