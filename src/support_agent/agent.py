@@ -21,7 +21,7 @@ import os
 from langgraph.graph import StateGraph, END, START
 from langgraph.prebuilt import ToolNode
 from langchain_ollama import ChatOllama
-from langchain_core.messages import SystemMessage, AIMessage
+from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
 from langchain_core.runnables import RunnableConfig
 from pathlib import Path
 
@@ -42,7 +42,11 @@ llm = ChatOllama(
     model="llama3.1:latest",  # Smaller, faster model for CPU inference (~1GB, much faster responses)
     temperature=0,  # Deterministic responses for customer support
     base_url=ollama_base_url,  # Use environment variable or default to localhost
-    timeout=120.0,  # 2 minute timeout - faster with smaller model
+    timeout=60.0,  # Reduce timeout from 120s to 60s for faster failure detection
+    model_kwargs={
+        "num_ctx": 4096,  # Limit context window for faster processing (default is much larger, often 131072)
+        "num_predict": 512,  # Limit max tokens to generate for faster responses
+    },
 ).bind_tools(tools)
 
 
@@ -159,7 +163,8 @@ def create_graph():
     2. Adds two nodes: "agent" (thinking) and "tools" (doing actions)
     3. Sets up flow: START → agent → decision → tools OR end
     4. After tools run, loops back to agent so it can use the tool results
-    5. Compiles it all into an executable graph
+    5. The agent can use the send_greeting tool on first interaction if needed
+    6. Compiles it all into an executable graph
     
     Returns:
         Compiled LangGraph application ready to process customer messages

@@ -117,6 +117,7 @@ LANGGRAPH_URL=http://localhost:2024
 ```
 
 **Get your LangSmith API key:**
+
 1. Sign up at [https://smith.langchain.com](https://smith.langchain.com)
 2. Go to Settings → API Keys
 3. Copy your API key and replace `your_api_key_here` above
@@ -176,6 +177,10 @@ Or to run in detached mode (background):
 
 ```bash
 docker-compose up -d
+
+#if any changes are made to the code, you need to restart the container
+#this will restart the container and reload the changes
+docker-compose restart support-bot
 ```
 
 This will:
@@ -183,7 +188,7 @@ This will:
 - ✅ Start the `support-bot` container
 - ✅ Connect to native Ollama at `http://host.docker.internal:11434`
 - ✅ Enable hot reload (edit `src/` files and see changes)
-- ✅ Expose the agent at `http://localhost:8123`
+- ✅ Expose the agent at `http://localhost:2024`
 
 ### Step 7: Access the Application
 
@@ -196,27 +201,27 @@ docker-compose logs -f support-bot
 
 Open your browser and navigate to:
 
-- **Agent UI / LangGraph Studio**: https://agentchat.vercel.app/ (LangChain Agent UI)
-- **API Documentation**: <http://localhost:8123/docs> (Swagger UI)
+- **Agent UI / LangGraph Studio**: <https://agentchat.vercel.app/> (LangChain Agent UI)
+- **API Documentation**: <http://localhost:2024/docs> (Swagger UI)
 - **Native Ollama API**: <http://localhost:11434> (if you need to check status)
 
 **Note:** The server logs will show a Studio URL like:
 
 ```plaintext
-Studio UI: https://smith.langchain.com/studio/?baseUrl=http://localhost:8123
+Studio UI: https://smith.langchain.com/studio/?baseUrl=http://localhost:2024
 ```
 
-Use `http://localhost:8123` instead of `http://0.0.0.0:8123` when configuring (they're equivalent, but localhost is clearer).
+Use `http://localhost:2024` instead of `http://0.0.0.0:2024` when configuring (they're equivalent, but localhost is clearer).
 
 ### Step 7: Configure Agent UI with Graph URL
 
 When you first access the Agent UI, you need to configure it to connect to your LangGraph server:
 
-1. **Open Agent UI**: Go to <http://localhost:8123> in your browser
+1. **Open Agent UI**: Go to <http://localhost:2024> in your browser
 
 2. **Enter Graph Configuration**:
 
-   - **Graph URL**: `http://localhost:8123`
+   - **Graph URL**: `http://localhost:2024`
    - **Graph Name**: `agent` (this matches the graph name in `langgraph.json`)
    - **API Key**: Leave empty (not needed for local development)
 
@@ -225,7 +230,7 @@ When you first access the Agent UI, you need to configure it to connect to your 
    The easiest way is to use the LangGraph Studio URL that appears in your server logs:
 
    ```plaintext
-   https://smith.langchain.com/studio/?baseUrl=http://localhost:8123
+   https://smith.langchain.com/studio/?baseUrl=http://localhost:2024
    ```
 
    This automatically configures the Studio to connect to your local graph. You can also find this URL in the container logs:
@@ -250,7 +255,7 @@ If the Agent UI can't connect:
 - ✅ Verify the server is responding:
 
    ```bash
-   curl http://localhost:8123/docs  # Should show Swagger UI HTML
+   curl http://localhost:2024/docs  # Should show Swagger UI HTML
    ```
 
 - ✅ Check the Studio URL in logs:
@@ -466,7 +471,7 @@ docker-compose ps
 # Expected: support-bot container shows "Up"
 
 # 4. Check LangGraph server is responding
-curl http://localhost:8123/docs
+curl http://localhost:2024/docs
 # Expected: HTML response (Swagger UI)
 
 # 5. Check graph is registered
@@ -489,9 +494,9 @@ If all checks pass, you're ready to use the Agent UI!
 ✅ **Start native Ollama** → `ollama serve` (runs in background)  
 ✅ **Build Docker image** → `langgraph build -t customer-support-bot:latest`  
 ✅ **Start container** → `docker-compose up`  
-✅ **Configure Agent UI** → Connect with graph URL `http://localhost:8123` and graph name `agent`  
+✅ **Configure Agent UI** → Connect with graph URL `http://localhost:2024` and graph name `agent`  
 ✅ **Develop!** → Edit `src/`, changes auto-reload  
 
-**Your agent is ready at:** <http://localhost:8123>
+**Your agent is ready at:** <http://localhost:2024>
 
-#folder
+# folder

@@ -20,15 +20,16 @@ COPY . .
 RUN mkdir -p storage
 
 # Expose LangGraph Dev port
-EXPOSE 8123
+EXPOSE 2024
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
-ENV OLLAMA_BASE_URL=http://ollama:11434
+# OLLAMA_BASE_URL should be set via docker-compose.yml or .env file
+# Defaults to http://localhost:11434 in agent.py if not set
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8123/health || exit 1
+    CMD curl -f http://localhost:2024/ || exit 1
 
 # Run LangGraph Dev server
-CMD ["langgraph", "dev", "--host", "0.0.0.0", "--port", "8123"]
+CMD ["langgraph", "dev", "--host", "0.0.0.0", "--port", "2024"]

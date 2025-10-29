@@ -19,7 +19,7 @@ from typing import Optional
 class SupportBotClient:
     """Client for interacting with the customer support bot API."""
     
-    def __init__(self, base_url: str = "http://localhost:8123"):
+    def __init__(self, base_url: str = "http://localhost:2024"):
         """
         Initialize the client.
         
@@ -259,9 +259,10 @@ def main():
     
     # Check if server is running
     try:
-        response = requests.get("http://localhost:8123/health", timeout=2)
+        # Try the root endpoint - LangGraph dev server doesn't have /health
+        response = requests.get("http://localhost:2024/", timeout=2)
         response.raise_for_status()
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.HTTPError):
         print("❌ Error: Bot is not running!")
         print("\nStart the bot first:")
         print("  langgraph dev\n")

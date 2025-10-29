@@ -61,6 +61,9 @@ echo "Running Evaluation"
 echo "========================================================================"
 echo ""
 
+# Ensure the project root is on PYTHONPATH so module imports work
+export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+
 python -m src.support_agent.tests.eval_langsmith
 
 echo ""

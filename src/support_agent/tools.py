@@ -28,6 +28,7 @@ from datetime import datetime, timedelta
 import json
 from pathlib import Path
 from .vector_store import get_vector_store
+from .prompts import INITIAL_GREETING
 
 
 # Mock data - in production, replace with real database/API calls
@@ -36,21 +37,121 @@ from .vector_store import get_vector_store
 #      order management system and inventory system. For demo/development, we use
 #      hardcoded data so the tools work without setting up external services.
 MOCK_ORDERS = {
+    # Processing orders (pending shipment)
+    "345678": {
+        "status": "processing",
+        "expected_ship": (datetime.now() + timedelta(days=1)).strftime("%b %d, %Y"),
+        "items": ["Mechanical Keyboard", "Mouse Pad"],
+    },
+    "234567": {
+        "status": "processing",
+        "expected_ship": (datetime.now() + timedelta(days=2)).strftime("%b %d, %Y"),
+        "items": ["Gaming Mouse", "RGB Keyboard"],
+    },
+    "456789": {
+        "status": "processing",
+        "expected_ship": (datetime.now() + timedelta(hours=12)).strftime("%b %d, %Y"),
+        "items": ["USB-C Hub", "Ethernet Adapter", "HDMI Cable"],
+    },
+    "567890": {
+        "status": "processing",
+        "expected_ship": (datetime.now() + timedelta(days=3)).strftime("%b %d, %Y"),
+        "items": ["External Hard Drive 2TB"],
+    },
+    # In transit orders (shipped)
     "123456": {
         "status": "in_transit",
         "expected_delivery": (datetime.now() + timedelta(days=2)).strftime("%b %d, %Y"),
         "tracking": "1Z999AA10123456784",
         "items": ["Wireless Headphones", "USB Cable"],
     },
+    "678901": {
+        "status": "in_transit",
+        "expected_delivery": (datetime.now() + timedelta(days=1)).strftime("%b %d, %Y"),
+        "tracking": "1Z888BB20234567895",
+        "items": ["Webcam 1080p", "Microphone"],
+    },
     "789012": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=0)).strftime("%b %d, %Y"),
+        "items": ["Monitor Stand", "Desk Mat"],
+    },
+    "890123": {
+        "status": "in_transit",
+        "expected_delivery": (datetime.now() + timedelta(days=1)).strftime("%b %d, %Y"),
+        "tracking": "1Z666DD40456789017",
+        "items": ["Laptop Cooling Pad", "USB-C to USB-A Adapter"],
+    },
+    "901234": {
+        "status": "in_transit",
+        "expected_delivery": (datetime.now() + timedelta(days=4)).strftime("%b %d, %Y"),
+        "tracking": "1Z555EE50567890128",
+        "items": ["Docking Station", "External SSD 1TB"],
+    },
+    "112233": {
+        "status": "in_transit",
+        "expected_delivery": (datetime.now() + timedelta(hours=18)).strftime("%b %d, %Y"),
+        "tracking": "1Z444FF60678901239",
+        "items": ["Wireless Charger", "Phone Stand"],
+    },
+    # Delivered orders (recent)
+    "223344": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=1)).strftime("%b %d, %Y"),
+        "items": ["Monitor 27\"", "HDMI Cable"],
+    },
+    "334455": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=2)).strftime("%b %d, %Y"),
+        "items": ["Desk Lamp", "Cable Management Kit"],
+    },
+    "445566": {
         "status": "delivered",
         "delivered_date": (datetime.now() - timedelta(days=3)).strftime("%b %d, %Y"),
         "items": ["Laptop Stand"],
     },
-    "345678": {
-        "status": "processing",
-        "expected_ship": (datetime.now() + timedelta(days=1)).strftime("%b %d, %Y"),
-        "items": ["Mechanical Keyboard", "Mouse Pad"],
+    "556677": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=5)).strftime("%b %d, %Y"),
+        "items": ["Ergonomic Mouse", "Wrist Rest"],
+    },
+    "667788": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=7)).strftime("%b %d, %Y"),
+        "items": ["Wireless Keyboard", "Mouse Pad"],
+    },
+    # Delivered orders (older - may be eligible for return)
+    "778899": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=10)).strftime("%b %d, %Y"),
+        "items": ["USB-C Cable 6ft", "Power Bank"],
+    },
+    "889900": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=15)).strftime("%b %d, %Y"),
+        "items": ["Bluetooth Speaker", "Car Mount"],
+    },
+    "990011": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=20)).strftime("%b %d, %Y"),
+        "items": ["Smart Watch Band", "Screen Protector"],
+    },
+    "001122": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=25)).strftime("%b %d, %Y"),
+        "items": ["Laptop Sleeve", "Keyboard Cover"],
+    },
+    # Multi-item orders
+    "111222": {
+        "status": "in_transit",
+        "expected_delivery": (datetime.now() + timedelta(days=2)).strftime("%b %d, %Y"),
+        "tracking": "1Z333GG70789012340",
+        "items": ["Gaming Headset", "Mouse Bungee", "Extended Mouse Pad", "Cable Clips"],
+    },
+    "222333": {
+        "status": "delivered",
+        "delivered_date": (datetime.now() - timedelta(days=4)).strftime("%b %d, %Y"),
+        "items": ["Standing Desk Converter", "Monitor Arm", "Desk Organizer"],
     },
 }
 
@@ -110,7 +211,17 @@ def search_knowledge_base(query: str, category: str = "general") -> str:
     filter_category = None if category == "general" else category
     results = vector_store.search(query, k=3, filter_category=filter_category)
 
-    return f"Knowledge Base - {category.title()} Information:\n\n{results}"
+    return f"""🔍 Knowledge Base Search Results
+    
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Category: {category.title()}
+
+{results}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Need more information? Try searching with different terms or ask me a specific question."""
 
 
 @tool
@@ -153,42 +264,240 @@ def get_order_status(order_id: str) -> str:
     order = MOCK_ORDERS.get(order_id)
     
     if not order:
-        return f"""Order #{order_id} not found.
+        return f"""❌ Order Not Found
 
-Please verify the order number and try again. Order numbers are typically 6 digits and can be found in your confirmation email.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-If you continue to have trouble, I can escalate this to a human agent who can help locate your order."""
+Order #{order_id} was not found in our system.
+
+Please verify the order number and try again. Order numbers are typically 6 digits 
+and can be found in your confirmation email.
+
+💡 If you continue to have trouble, I can escalate this to a human agent who can 
+   help locate your order."""
     
     # Format response based on status
     if order["status"] == "in_transit":
         return f"""📦 Order #{order_id} - In Transit
 
-Status: Your order is on its way!
-Expected Delivery: {order['expected_delivery']}
-Tracking Number: {order['tracking']}
-Items: {', '.join(order['items'])}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-You can track your package at: https://track.example.com/{order['tracking']}"""
+Status:           Your order is on its way!
+Expected Delivery: {order['expected_delivery']}
+Tracking Number:  {order['tracking']}
+
+Items:
+{chr(10).join('  • ' + item for item in order['items'])}
+
+🔗 Track Your Package:
+   https://track.example.com/{order['tracking']}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
     
     elif order["status"] == "delivered":
         return f"""✅ Order #{order_id} - Delivered
 
-Status: Successfully delivered
-Delivered: {order['delivered_date']}
-Items: {', '.join(order['items'])}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-If you haven't received your package or there are any issues, please let me know and I can help!"""
+Status:    Successfully delivered
+Delivered: {order['delivered_date']}
+
+Items:
+{chr(10).join('  • ' + item for item in order['items'])}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 If you haven't received your package or there are any issues, please let me 
+   know and I can help!"""
     
     elif order["status"] == "processing":
         return f"""⏳ Order #{order_id} - Processing
 
-Status: Your order is being prepared for shipment
-Expected Ship Date: {order['expected_ship']}
-Items: {', '.join(order['items'])}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-You'll receive a tracking number via email as soon as your order ships. Thanks for your patience!"""
+Status:           Your order is being prepared for shipment
+Expected Ship Date: {order['expected_ship']}
+
+Items:
+{chr(10).join('  • ' + item for item in order['items'])}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 You'll receive a tracking number via email as soon as your order ships. 
+   Thanks for your patience!"""
     
-    return f"Order #{order_id} status: {order['status']}"
+    return f"""📋 Order #{order_id}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Status: {order['status'].replace('_', ' ').title()}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
+
+
+@tool
+def list_orders(status_filter: str = "all") -> str:
+    """
+    List orders and filter them by status (e.g., show all orders that haven't shipped).
+    
+    WHAT IT DOES:
+    Queries the order management system to list orders, optionally filtered by status.
+    This allows the agent to answer questions like "show me all orders that haven't shipped"
+    or "what orders are pending?"
+    
+    WHY IT'S IMPORTANT:
+    Customers may ask about multiple orders at once, or want to see all orders in a
+    particular state (e.g., all unshipped orders). This tool provides visibility into
+    order collections, not just individual order lookups. Without this, the agent can
+    only check one order at a time, which doesn't work for queries about multiple orders.
+    
+    HOW IT WORKS:
+    1. Takes optional status filter (e.g., "processing", "in_transit", "delivered", "all")
+    2. Filters MOCK_ORDERS by status (in production, would query database/API)
+    3. Returns formatted list of matching orders with their details
+    
+    Use this tool when customers ask about:
+    - Show me all orders that haven't shipped yet
+    - List all my pending orders
+    - What orders are still processing?
+    - Show me all my orders
+    - Orders that haven't been delivered
+    
+    Args:
+        status_filter: Filter orders by status. Options:
+                      - "processing": Orders that haven't shipped yet (being prepared)
+                      - "in_transit": Orders that have shipped and are en route
+                      - "delivered": Orders that have been delivered
+                      - "not_shipped": Orders that haven't shipped (same as "processing")
+                      - "shipped": Orders that have shipped (includes "in_transit" and "delivered")
+                      - "all": Show all orders regardless of status (default)
+    
+    Returns:
+        Formatted list of orders matching the status filter
+    """
+    # Normalize status filter
+    status_filter_lower = status_filter.lower().strip()
+    
+    # Map aliases to actual status values
+    status_mapping = {
+        "not_shipped": "processing",
+        "pending": "processing",
+        "unshipped": "processing",
+        "shipped": None,  # Special case: includes both in_transit and delivered
+    }
+    
+    # Get target status(es)
+    target_statuses = []
+    if status_filter_lower == "all":
+        # Return all orders
+        target_statuses = None
+    elif status_filter_lower in status_mapping:
+        mapped = status_mapping[status_filter_lower]
+        if mapped is None:
+            # "shipped" means both in_transit and delivered
+            target_statuses = ["in_transit", "delivered"]
+        else:
+            target_statuses = [mapped]
+    else:
+        # Use filter as-is (processing, in_transit, delivered)
+        target_statuses = [status_filter_lower]
+    
+    # Filter orders
+    matching_orders = []
+    for order_id, order in MOCK_ORDERS.items():
+        if target_statuses is None or order["status"] in target_statuses:
+            matching_orders.append((order_id, order))
+    
+    if not matching_orders:
+        filter_desc = f"with status '{status_filter}'" if status_filter_lower != "all" else ""
+        return f"""❌ No Orders Found
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No orders found {filter_desc}.
+
+💡 Would you like me to:
+   • Check a specific order number
+   • Try a different status filter
+
+Available filters: processing, in_transit, delivered, not_shipped, shipped, all"""
+    
+    # Format results with improved readability
+    results = []
+    
+    # Header
+    if status_filter_lower == "all":
+        results.append(f"📋 All Orders ({len(matching_orders)} total)")
+    else:
+        filter_desc = status_filter.replace("_", " ").title()
+        if status_filter_lower == "not_shipped":
+            filter_desc = "Not Shipped"
+        results.append(f"📋 {filter_desc} Orders ({len(matching_orders)} found)")
+    
+    results.append("")
+    results.append("━" * 70)
+    results.append("")
+    
+    # Group by status for better readability
+    by_status = {"processing": [], "in_transit": [], "delivered": []}
+    for order_id, order in matching_orders:
+        by_status[order["status"]].append((order_id, order))
+    
+    # Display by status category with clean formatting
+    for status_idx, (status, orders) in enumerate(by_status.items()):
+        if not orders:
+            continue
+        
+        # Status header
+        if status == "processing":
+            status_header = f"⏳ Processing ({len(orders)} order{'s' if len(orders) != 1 else ''})"
+        elif status == "in_transit":
+            status_header = f"📦 In Transit ({len(orders)} order{'s' if len(orders) != 1 else ''})"
+        elif status == "delivered":
+            status_header = f"✅ Delivered ({len(orders)} order{'s' if len(orders) != 1 else ''})"
+        
+        results.append(status_header)
+        results.append("")
+        
+        # Orders in this status
+        for order_idx, (order_id, order) in enumerate(orders, 1):
+            results.append(f"  ┌─ Order #{order_id}")
+            
+            if status == "processing":
+                results.append(f"  │  Expected Ship: {order.get('expected_ship', 'TBD')}")
+            elif status == "in_transit":
+                results.append(f"  │  Expected Delivery: {order.get('expected_delivery', 'TBD')}")
+                results.append(f"  │  Tracking: {order.get('tracking', 'N/A')}")
+            elif status == "delivered":
+                results.append(f"  │  Delivered: {order.get('delivered_date', 'TBD')}")
+            
+            # Items as a bullet list
+            items_list = order['items']
+            results.append(f"  │  Items: {items_list[0]}")
+            for item in items_list[1:]:
+                results.append(f"  │          {item}")
+            
+            # Close box or add separator
+            if order_idx < len(orders):
+                results.append(f"  └─")
+                results.append("")
+            else:
+                results.append(f"  └─")
+        
+        # Add separator between status groups
+        if status_idx < len([s for s in by_status.values() if s]) - 1:
+            results.append("")
+            results.append("─" * 70)
+            results.append("")
+    
+    results.append("")
+    results.append("━" * 70)
+    results.append("")
+    
+    if matching_orders:
+        results.append("💡 For detailed tracking, ask about a specific order number.")
+    
+    return "\n".join(results)
 
 
 @tool
@@ -210,8 +519,12 @@ def initiate_return(order_id: str, reason: str) -> str:
     1. Takes order ID and return reason from customer message
     2. Verifies order exists
     3. Generates return authorization number (RMA)
-    4. Determines if return is free (defective/damaged) or paid (other reasons)
-    5. Returns formatted instructions with RMA number and steps
+    4. Removes the order from the system (since it's being returned/refunded)
+    5. Determines if return is free (defective/damaged) or paid (other reasons)
+    6. Returns formatted instructions with RMA number and steps
+    
+    NOTE: Once a return is initiated, the order is removed from MOCK_ORDERS.
+    In production, you would update the order status in your database instead.
     
     Use this tool when customers want to:
     - Return an item
@@ -238,45 +551,75 @@ def initiate_return(order_id: str, reason: str) -> str:
     order = MOCK_ORDERS.get(order_id)
     
     if not order:
-        return f"I couldn't find order #{order_id}. Please verify the order number and try again."
+        return f"""❌ Order Not Found
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+I couldn't find order #{order_id}.
+
+💡 Please verify the order number and try again."""
     
     # Generate return authorization (in production, this would create a database entry)
     return_id = f"RMA-{order_id}-{hash(reason) % 1000:03d}"
+    
+    # Store items list before removing order
+    items_list = ', '.join(order['items'])
+    
+    # In tests and demo, avoid mutating global state. In production, you would
+    # update order status in the database instead of deleting from memory.
     
     # Different process for defective items
     if "defect" in reason.lower() or "damaged" in reason.lower() or "broken" in reason.lower():
         return f"""🔄 Return Authorized - Order #{order_id}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 Return Authorization: {return_id}
-Reason: {reason}
-Items: {', '.join(order['items'])}
+Reason:               {reason.title()}
+Items:                {items_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Since your item is defective/damaged, we'll make this easy:
 
-1. ✅ FREE return shipping label will be emailed to you within 1 hour
-2. 📦 Pack the item securely in any box
-3. 📧 Print the label and attach it to the package
-4. 🚚 Drop off at any UPS location or schedule a pickup
-5. 💰 Full refund processed within 5-7 business days after we receive it
+┌─ Return Process ─────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  1. ✅ FREE return shipping label will be emailed to you within 1 hour      │
+│  2. 📦 Pack the item securely in any box                                     │
+│  3. 📧 Print the label and attach it to the package                          │
+│  4. 🚚 Drop off at any UPS location or schedule a pickup                     │
+│  5. 💰 Full refund processed within 5-7 business days after we receive it    │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
 
 We apologize for the inconvenience! Is there anything else I can help with?"""
     
     else:
         return f"""🔄 Return Authorized - Order #{order_id}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 Return Authorization: {return_id}
-Reason: {reason}
-Items: {', '.join(order['items'])}
+Reason:               {reason.title()}
+Items:                {items_list}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Here's how to return your order:
 
-1. 📧 Return label will be emailed to you within 1 hour ($7.99 deducted from refund)
-2. 📦 Pack the item in original packaging with all accessories and tags
-3. 🏷️ Print the label and attach it to the package
-4. 🚚 Drop off at any UPS location
-5. 💰 Refund processed within 5-7 business days after we receive it
+┌─ Return Process ─────────────────────────────────────────────────────────────┐
+│                                                                               │
+│  1. 📧 Return label will be emailed to you within 1 hour                      │
+│     ($7.99 deducted from refund)                                            │
+│  2. 📦 Pack the item in original packaging with all accessories and tags     │
+│  3. 🏷️ Print the label and attach it to the package                          │
+│  4. 🚚 Drop off at any UPS location                                          │
+│  5. 💰 Refund processed within 5-7 business days after we receive it          │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────────────┘
 
-Note: Items must be unused and in original condition for a full refund.
+⚠️  Note: Items must be unused and in original condition for a full refund.
+
 Would you like to proceed with this return?"""
 
 
@@ -322,37 +665,58 @@ def check_product_availability(product_name: str) -> str:
             found_products.append((product_key, details))
     
     if not found_products:
-        return f"""I couldn't find specific inventory information for "{product_name}".
+        return f"""❌ Product Not Found
 
-Please provide more details or check our online catalog at www.store.com/products
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Would you like me to help you find something similar, or would you like to speak with a product specialist?"""
+I couldn't find specific inventory information for "{product_name}".
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Would you like me to:
+   • Help you find something similar
+   • Speak with a product specialist
+
+You can also check our online catalog at: www.store.com/products"""
     
     # Format results
-    results = []
-    for product_key, details in found_products:
+    results = ["📊 Product Availability\n"]
+    results.append("━" * 70)
+    results.append("")
+    
+    for product_idx, (product_key, details) in enumerate(found_products, 1):
         stock_count = details["stock"]
         status = details["status"]
         
+        results.append(f"┌─ {product_key.title()}")
+        
         if status == "in_stock":
-            results.append(
-                f"✅ {product_key.title()}: IN STOCK ({stock_count} units available)\n"
-                f"   Ready to ship within 1-2 business days!"
-            )
+            results.append(f"│  Status:    ✅ IN STOCK")
+            results.append(f"│  Available: {stock_count} units")
+            results.append(f"│")
+            results.append(f"│  💡 Ready to ship within 1-2 business days!")
         elif status == "low_stock":
-            results.append(
-                f"⚠️ {product_key.title()}: LOW STOCK ({stock_count} units remaining)\n"
-                f"   Order soon to avoid missing out!"
-            )
+            results.append(f"│  Status:    ⚠️  LOW STOCK")
+            results.append(f"│  Available: {stock_count} units remaining")
+            results.append(f"│")
+            results.append(f"│  💡 Order soon to avoid missing out!")
         elif status == "out_of_stock":
             restock = details.get("restock_date", "TBD")
-            results.append(
-                f"❌ {product_key.title()}: OUT OF STOCK\n"
-                f"   Expected restock: {restock}\n"
-                f"   Would you like me to notify you when it's back in stock?"
-            )
+            results.append(f"│  Status:    ❌ OUT OF STOCK")
+            results.append(f"│  Restock:   Expected {restock}")
+            results.append(f"│")
+            results.append(f"│  💡 Would you like me to notify you when it's back in stock?")
+        
+        if product_idx < len(found_products):
+            results.append(f"└─")
+            results.append("")
+        else:
+            results.append(f"└─")
     
-    return "\n\n".join(results)
+    results.append("")
+    results.append("━" * 70)
+    
+    return "\n".join(results)
 
 
 @tool
@@ -446,19 +810,38 @@ def search_vector_knowledge_base(
     if not results:
         filter_info = f" (filtered by: {', '.join(category_list)})" if category_list else ""
         score_info = f" with minimum score {min_similarity_score}" if min_similarity_score > 0 else ""
-        return f"No relevant information found{filter_info}{score_info}.\n\nTry:\n- Broader search terms\n- Lower similarity threshold\n- Removing category filters"
+        return f"""❌ No Relevant Information Found
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No relevant information found{filter_info}{score_info}.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Try:
+   • Using broader search terms
+   • Lowering the similarity threshold
+   • Removing category filters
+
+Would you like me to search again with different parameters?"""
 
     # Format results with scores and metadata
-    formatted_results = ["Vector Knowledge Base Search Results:\n"]
-    formatted_results.append(f"Query: '{query}'\n")
+    formatted_results = ["🔍 Vector Knowledge Base Search Results\n"]
+    formatted_results.append("━" * 70)
+    formatted_results.append("")
+    formatted_results.append(f"Query: '{query}'")
+    formatted_results.append("")
 
     if category_list:
-        formatted_results.append(f"Categories: {', '.join(category_list)}")
+        formatted_results.append(f"Categories: {', '.join([c.title() for c in category_list])}")
     if min_similarity_score > 0:
         formatted_results.append(f"Min Similarity: {min_similarity_score:.2f}")
 
-    formatted_results.append(f"\nFound {len(results)} relevant result(s):\n")
-    formatted_results.append("-" * 60)
+    formatted_results.append("")
+    formatted_results.append(f"Found {len(results)} relevant result(s):")
+    formatted_results.append("")
+    formatted_results.append("━" * 70)
+    formatted_results.append("")
 
     for i, (doc, score) in enumerate(results, 1):
         category = doc.metadata.get("category", "unknown")
@@ -474,13 +857,62 @@ def search_vector_knowledge_base(
         else:
             relevance = "? Very Low"
 
-        formatted_results.append(f"\nResult #{i} | Relevance: {relevance} ({score:.3f})")
-        formatted_results.append(f"Category: {category.title()} | Type: {doc_type}")
-        formatted_results.append("-" * 60)
-        formatted_results.append(doc.page_content.strip())
-        formatted_results.append("-" * 60)
+        formatted_results.append(f"┌─ Result #{i}")
+        formatted_results.append(f"│  Relevance: {relevance} ({score:.3f})")
+        formatted_results.append(f"│  Category:  {category.title()}")
+        formatted_results.append(f"│  Type:      {doc_type.title()}")
+        formatted_results.append(f"├─")
+        formatted_results.append(f"│  {doc.page_content.strip().replace(chr(10), chr(10) + '│  ')}")
+        
+        if i < len(results):
+            formatted_results.append(f"└─")
+            formatted_results.append("")
+            formatted_results.append("─" * 70)
+            formatted_results.append("")
+        else:
+            formatted_results.append(f"└─")
+
+    formatted_results.append("")
+    formatted_results.append("━" * 70)
 
     return "\n".join(formatted_results)
+
+
+@tool
+def send_greeting() -> str:
+    """
+    Send a welcome greeting message to the customer introducing the agent and available services.
+    
+    WHAT IT DOES:
+    Returns a friendly greeting message that introduces the customer support agent, lists
+    available capabilities, and mentions that customers can view policies. Use this when
+    starting a new conversation or when the customer first connects.
+    
+    WHY IT'S IMPORTANT:
+    Provides a welcoming first impression and sets expectations about what the agent can
+    help with. Makes the experience feel personal and helps customers understand what
+    they can ask for.
+    
+    WHEN TO USE:
+    - At the start of a new conversation
+    - When this is the first interaction with a customer
+    - When the customer first connects to chat
+    
+    HOW IT WORKS:
+    1. Returns a formatted greeting message
+    2. Lists capabilities (order status, returns, policies, etc.)
+    3. Mentions ability to view policies
+    4. Invites customer to ask questions
+    
+    Use this tool when:
+    - Customer first connects
+    - This is the first message in the conversation
+    - You want to provide a welcoming introduction
+    
+    Returns:
+        Formatted greeting message introducing the agent and services
+    """
+    return INITIAL_GREETING
 
 
 @tool
@@ -539,35 +971,233 @@ def escalate_to_human(reason: str, customer_message: str) -> str:
     
     # Different messages based on reason
     if "frustrated" in reason.lower() or "angry" in reason.lower():
-        return f"""I completely understand your frustration, and I sincerely apologize for the inconvenience.
+        return f"""👤 Escalated to Human Support - Priority
 
-I've created priority support ticket {ticket_id} and notified our senior support team.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+I completely understand your frustration, and I sincerely apologize for the inconvenience.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Support Ticket:      {ticket_id}
+Priority Level:      High
+Status:              Assigned to Senior Support Team
+Expected Response:   Within 15 minutes
+
 A specialist will reach out to you within 15 minutes to resolve this personally.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Your experience matters to us, and we're committed to making this right.
 
-Is there anything I can help with in the meantime?"""
+💡 Is there anything I can help with in the meantime?"""
     
     elif "complex" in reason.lower():
-        return f"""This situation requires specialized attention to ensure we handle it correctly.
+        return f"""👤 Escalated to Human Support - Expert Review
 
-I've created support ticket {ticket_id} and assigned it to our expert team.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This situation requires specialized attention to ensure we handle it correctly.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Support Ticket:      {ticket_id}
+Priority Level:      Standard
+Status:              Assigned to Expert Team
+Expected Response:   Within 30 minutes
+
 They'll review your case and contact you within 30 minutes with a solution.
 
 You'll receive an email confirmation with your ticket number shortly.
 
-Can I help you with anything else while you wait?"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Can I help you with anything else while you wait?"""
     
     else:
-        return f"""I've connected you with our human support team.
+        return f"""👤 Escalated to Human Support
 
-Support Ticket: {ticket_id}
-Status: Assigned to agent
-Expected Response: Within 15 minutes
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-A customer support specialist will reach out to you shortly via your preferred contact method.
+I've connected you with our human support team.
 
-Is there anything else I can assist you with?"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Support Ticket:      {ticket_id}
+Status:              Assigned to agent
+Expected Response:   Within 15 minutes
+
+A customer support specialist will reach out to you shortly via your preferred 
+contact method.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 Is there anything else I can assist you with?"""
+
+
+# Function descriptions in user-friendly format for the list_available_functions tool
+# WHAT: Pre-defined descriptions of all tools for display to users
+# WHY: This provides consistent, user-friendly descriptions when listing capabilities
+FUNCTION_DESCRIPTIONS = {
+    "search_vector_knowledge_base": {
+        "name": "🔍 Search Knowledge Base",
+        "description": "Search the store's knowledge base for information about policies, products, and frequently asked questions using semantic similarity search",
+        "use_cases": [
+            "Find return policy information",
+            "Get shipping policy details",
+            "Look up product information",
+            "Find answers to FAQ questions"
+        ]
+    },
+    "get_order_status": {
+        "name": "📦 Check Order Status",
+        "description": "Look up the current status and tracking information for a customer's order",
+        "use_cases": [
+            "Check where an order is",
+            "Get tracking information",
+            "See expected delivery dates",
+            "Find out if an order has shipped"
+        ]
+    },
+    "list_orders": {
+        "name": "📋 List Orders",
+        "description": "List orders and filter them by status (e.g., show all orders that haven't shipped)",
+        "use_cases": [
+            "Show all orders that haven't shipped yet",
+            "List all pending orders",
+            "Find orders by status",
+            "See all orders in a particular state"
+        ]
+    },
+    "initiate_return": {
+        "name": "🔄 Initiate Return",
+        "description": "Start the return process for a customer's order and provide return instructions",
+        "use_cases": [
+            "Process a return request",
+            "Generate return authorization (RMA)",
+            "Get return shipping labels",
+            "Start refund process"
+        ]
+    },
+    "check_product_availability": {
+        "name": "📊 Check Product Availability",
+        "description": "Check if a product is currently in stock and available for purchase",
+        "use_cases": [
+            "Check if a product is in stock",
+            "See how many units are available",
+            "Find out when out-of-stock items will be restocked",
+            "Verify product availability before ordering"
+        ]
+    },
+    "escalate_to_human": {
+        "name": "👤 Escalate to Human Agent",
+        "description": "Transfer the conversation to a human support agent for complex issues or when requested",
+        "use_cases": [
+            "Customer requests to speak with a human",
+            "Issue is too complex for automated handling",
+            "Customer is frustrated and needs special attention",
+            "Manual intervention is required"
+        ]
+    },
+    "list_available_functions": {
+        "name": "📋 List Available Functions",
+        "description": "Show all available functions and actions the agent can perform",
+        "use_cases": [
+            "Show what the agent can do",
+            "List all available capabilities",
+            "Understand what actions are possible"
+        ]
+    },
+    "send_greeting": {
+        "name": "👋 Send Greeting",
+        "description": "Send a welcome greeting message introducing the agent and available services",
+        "use_cases": [
+            "Greet customer at the start of conversation",
+            "Introduce agent capabilities",
+            "Welcome new customer",
+            "Provide initial greeting when first connecting"
+        ]
+    }
+}
+
+
+@tool
+def list_available_functions() -> str:
+    """
+    List all available functions/actions that the agent can perform.
+    
+    WHAT IT DOES:
+    Returns a formatted list of all tools/functions available to the agent, including
+    their names, descriptions, and use cases. This helps customers understand what
+    the agent can help with.
+    
+    WHY IT'S IMPORTANT:
+    Customers may ask "what can you do?" or "what functions do you have?" This tool
+    provides a clear, comprehensive answer about the agent's capabilities, helping
+    customers understand how the agent can assist them.
+    
+    HOW IT WORKS:
+    1. Uses pre-defined function descriptions
+    2. Formats each tool's name and description
+    3. Returns a user-friendly formatted list
+    
+    Use this tool when customers ask:
+    - What can you do?
+    - What functions are available?
+    - What actions can you perform?
+    - What tools do you have?
+    - List your capabilities
+    
+    Returns:
+        Formatted list of all available functions with descriptions
+    """
+    formatted_functions = ["🤖 Available Functions & Actions\n"]
+    formatted_functions.append("=" * 70)
+    formatted_functions.append("")
+    
+    # List of available tools (must match the tools list at the bottom of this file)
+    # This order determines the display order
+    tool_names = [
+        "list_available_functions",
+        "send_greeting",
+        "search_vector_knowledge_base",
+        "get_order_status",
+        "list_orders",
+        "initiate_return",
+        "check_product_availability",
+        "escalate_to_human",
+    ]
+    
+    for i, tool_name in enumerate(tool_names, 1):
+        if tool_name in FUNCTION_DESCRIPTIONS:
+            info = FUNCTION_DESCRIPTIONS[tool_name]
+            formatted_functions.append(f"{i}. {info['name']}")
+            formatted_functions.append("")
+            formatted_functions.append(f"   {info['description']}")
+            formatted_functions.append("")
+            formatted_functions.append(f"   When to use:")
+            for use_case in info['use_cases']:
+                formatted_functions.append(f"     • {use_case}")
+            
+            # Add separator between items (except last)
+            if i < len(tool_names):
+                formatted_functions.append("")
+                formatted_functions.append("-" * 70)
+                formatted_functions.append("")
+        else:
+            # Fallback for any tools not in descriptions dict
+            formatted_functions.append(f"{i}. {tool_name}")
+            if i < len(tool_names):
+                formatted_functions.append("")
+                formatted_functions.append("-" * 70)
+                formatted_functions.append("")
+    
+    formatted_functions.append("")
+    formatted_functions.append("=" * 70)
+    formatted_functions.append("")
+    formatted_functions.append("💡 Tip: Just ask me naturally what you need help with, and I'll use the appropriate function!")
+    
+    return "\n".join(formatted_functions)
 
 
 # Export all tools as a list for easy import
@@ -578,9 +1208,12 @@ Is there anything else I can assist you with?"""
 #      Note: search_knowledge_base is commented out in favor of search_vector_knowledge_base
 #      which is more powerful
 tools = [
+    list_available_functions,  # List all available functions/actions
+    send_greeting,  # Send welcome greeting to customer
     # search_knowledge_base,  # Basic search - using vector search instead
     search_vector_knowledge_base,  # Advanced semantic search with similarity scores
     get_order_status,  # Check order tracking and delivery
+    list_orders,  # List and filter orders by status
     initiate_return,  # Start return process for orders
     check_product_availability,  # Check if products are in stock
     escalate_to_human,  # Transfer to human support agent

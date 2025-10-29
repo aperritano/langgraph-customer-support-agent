@@ -29,6 +29,9 @@ fi
 echo -e "${GREEN}Running tests...${NC}"
 echo ""
 
+# Ensure the project root is on PYTHONPATH so imports like 'src.support_agent' work
+export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+
 # Run tests (unit tests only by default)
 pytest src/support_agent/tests/ -m "not integration" -v
 

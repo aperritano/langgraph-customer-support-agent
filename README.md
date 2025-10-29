@@ -31,6 +31,12 @@ The system architecture reflects real-world production considerations:
 
 ![Agent Chat Interface](images/agent-ui-start.png)
 
+![Agent UI Greeting](images/agent-ui-greeting.png)
+
+![Agent UI Tool List](images/agent-ui-tool-list.png)
+
+![Agent UI Orders](images/agent-ui-orders.png)
+
 *The Agent Chat UI: a simple, clean interface for interacting with the customer support agent via localhost deployment.*
 
 ### Rigorous Evaluation Framework
@@ -170,6 +176,7 @@ LANGGRAPH_URL=http://localhost:2024
 ```
 
 **Get your LangSmith API key:**
+
 1. Sign up at [https://smith.langchain.com](https://smith.langchain.com)
 2. Go to Settings → API Keys
 3. Copy your API key and replace `your_api_key_here` above
@@ -184,7 +191,7 @@ LANGGRAPH_URL=http://localhost:2024
 langgraph dev
 ```
 
-Then open: <http://127.0.0.1:8123>
+Then open: <http://127.0.0.1:2024>
 
 **Option B: Agent UI Interface**
 
@@ -199,12 +206,18 @@ langgraph dev
 2. Open the Agent UI in your browser:
 
 ```
-http://localhost:8123
+http://localhost:2024
 ```
 
 3. Click "Start Agent" to begin:
 
 ![Agent UI Start](images/agent-ui-start.png)
+
+![Agent UI Greeting](images/agent-ui-greeting.png)
+
+![Agent UI Tool List](images/agent-ui-tool-list.png)
+
+![Agent UI Orders](images/agent-ui-orders.png)
 
 4. Enter your messages in the chat interface and interact with the customer support bot
 5. The UI shows tool calls and agent responses in real-time
@@ -257,6 +270,7 @@ LANGGRAPH_URL=http://localhost:2024
 *Required for LangSmith evaluation and tracing features. Can be omitted if not using those features.
 
 **Getting your LangSmith API key:**
+
 1. Sign up at [https://smith.langchain.com](https://smith.langchain.com)
 2. Go to Settings → API Keys
 3. Copy your API key and replace `your_api_key_here` in your `.env` file
@@ -370,12 +384,18 @@ The Agent UI provides an interactive web interface to chat with your customer su
 2. **Open the Agent UI** in your browser:
 
    ```
-   http://localhost:8123
+   http://localhost:2024
    ```
 
 3. **Start the conversation**:
 
    ![Agent UI Start](images/agent-ui-start.png)
+
+   ![Agent UI Greeting](images/agent-ui-greeting.png)
+
+   ![Agent UI Tool List](images/agent-ui-tool-list.png)
+
+   ![Agent UI Orders](images/agent-ui-orders.png)
 
    Click "Start Agent" or begin typing your message in the chat interface
 
@@ -396,7 +416,7 @@ The Agent UI provides an interactive web interface to chat with your customer su
 For advanced debugging and visualization:
 
 1. Start server: `langgraph dev`
-2. Open <http://127.0.0.1:8123>
+2. Open <http://127.0.0.1:2024>
 3. Type messages in the chat interface
 4. Watch tool calls happen in real-time
 5. Inspect state at each step
@@ -422,12 +442,12 @@ You: Can you check order #123456?
 import requests
 
 # Create thread
-response = requests.post("http://localhost:8123/threads")
+response = requests.post("http://localhost:2024/threads")
 thread_id = response.json()["thread_id"]
 
 # Send message
 requests.post(
-    f"http://localhost:8123/threads/{thread_id}/runs",
+    f"http://localhost:2024/threads/{thread_id}/runs",
     json={
         "input": {
             "messages": [{"role": "user", "content": "What's your return policy?"}]
@@ -876,11 +896,11 @@ docker-compose up
 1. ✅ Ollama service starts
 2. ✅ Downloads llama3.1:latest model (happens once, ~2GB)
 3. ✅ Support bot starts and connects to Ollama
-4. ✅ API ready at <http://localhost:8123>
+4. ✅ API ready at <http://localhost:2024>
 
 **Access the application:**
 
-- Agent UI Interface: <http://localhost:8123>
+- Agent UI Interface: <http://localhost:2024>
 - Ollama API: <http://localhost:11434>
 
 ### Using Agent UI with Docker
@@ -898,12 +918,18 @@ Once Docker is running, access the Agent UI interface:
 2. **Access the Agent UI** in your browser:
 
    ```
-   http://localhost:8123
+   http://localhost:2024
    ```
 
 3. **Start chatting**:
 
    ![Agent UI Start](images/agent-ui-start.png)
+
+   ![Agent UI Greeting](images/agent-ui-greeting.png)
+
+   ![Agent UI Tool List](images/agent-ui-tool-list.png)
+
+   ![Agent UI Orders](images/agent-ui-orders.png)
 
    Click "Start Agent" and begin interacting with your customer support bot
 
@@ -948,7 +974,7 @@ The setup includes three services:
 3. **support-bot** - The LangGraph customer support agent
    - Starts only after Ollama and model are ready
    - Hot-reload enabled for development (code changes auto-reload)
-   - Exposes API on port 8123
+   - Exposes API on port 2024
 
 ### Benefits of Docker Setup
 
@@ -961,7 +987,7 @@ The setup includes three services:
 
 The Docker setup automatically configures:
 
-- LangGraph server on port 8123
+- LangGraph server on port 2024
 - Ollama service with llama3.1:latest model pre-loaded
 - Persistent storage for conversation history
 - Network connectivity between all services
@@ -1015,7 +1041,7 @@ Just edit your code locally and it will reload automatically in the container!
 services:
   support-bot:
     ports:
-      - "8124:8123"  # Use port 8124 instead of 8123
+      - "8124:2024"  # Use port 8124 instead of 2024
 ```
 
 **Issue: Out of memory**
@@ -1191,7 +1217,7 @@ curl http://localhost:11434/api/tags
 
 #### Port Already in Use
 
-**Error**: `Address already in use: 8123`
+**Error**: `Address already in use: 2024`
 
 **Solution**:
 
@@ -1199,12 +1225,12 @@ curl http://localhost:11434/api/tags
 # Option 1: Use different port
 langgraph dev --port 8124
 
-# Option 2: Find and kill process using port 8123
+# Option 2: Find and kill process using port 2024
 # macOS/Linux:
-lsof -ti:8123 | xargs kill -9
+lsof -ti:2024 | xargs kill -9
 
 # Windows:
-netstat -ano | findstr :8123
+netstat -ano | findstr :2024
 taskkill /PID <PID> /F
 ```
 
@@ -1337,11 +1363,11 @@ def my_tool(param: str) -> str:
 
 ```bash
 # Check base URL
-curl http://localhost:8123/health
+curl http://localhost:2024/
 
 # Verify thread exists before sending message
 # Create thread first:
-curl -X POST http://localhost:8123/threads
+curl -X POST http://localhost:2024/threads
 
 # Check LangGraph Dev is running
 ps aux | grep langgraph
@@ -1363,7 +1389,7 @@ ps aux | grep langgraph
 # 3. Tool error
 
 # Test with curl
-curl -X POST http://localhost:8123/threads/test/runs \
+curl -X POST http://localhost:2024/threads/test/runs \
   -H "Content-Type: application/json" \
   -d '{"input": {"messages": [{"role": "user", "content": "test"}]}}'
 ```
@@ -1563,7 +1589,7 @@ gunicorn -w 4 -k uvicorn.workers.UvicornWorker src.support_agent.agent:app
 docker build -t support-bot .
 
 # Run container
-docker run -p 8123:8123 support-bot
+docker run -p 2024:2024 support-bot
 ```
 
 ### LangGraph Cloud
