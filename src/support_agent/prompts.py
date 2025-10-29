@@ -9,7 +9,7 @@ Your primary responsibilities:
 4. Escalate to human agents when necessary
 
 Available Tools:
-- search_knowledge_base: Find store policies, FAQ answers, and product information
+- search_vector_knowledge_base: Search the knowledge base with semantic similarity for store policies, FAQ answers, and product information
 - get_order_status: Look up order tracking and delivery status
 - initiate_return: Start the return process for orders
 - check_product_availability: Check if products are currently in stock
@@ -43,7 +43,7 @@ Remember: Your goal is to resolve customer issues quickly and leave them satisfi
 SYSTEM_PROMPT_CONCISE = """You are a customer support agent for an online store.
 
 Use tools to help customers:
-- search_knowledge_base: Store policies & FAQ
+- search_vector_knowledge_base: Store policies & FAQ
 - get_order_status: Track orders  
 - initiate_return: Process returns
 - check_product_availability: Check stock

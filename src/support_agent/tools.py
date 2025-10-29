@@ -301,10 +301,17 @@ def search_vector_knowledge_base(
     # Get vector store instance
     vector_store = get_vector_store()
 
-    # Validate and constrain max_results
+    # Validate and constrain max_results (handle string input from LLM)
+    if isinstance(max_results, str):
+        max_results = int(max_results) if max_results.isdigit() else 5
     max_results = max(1, min(10, max_results))
 
-    # Validate similarity score
+    # Validate similarity score (handle string input from LLM)
+    if isinstance(min_similarity_score, str):
+        try:
+            min_similarity_score = float(min_similarity_score)
+        except ValueError:
+            min_similarity_score = 0.0
     min_similarity_score = max(0.0, min(1.0, min_similarity_score))
 
     # Parse categories filter
@@ -430,7 +437,7 @@ Is there anything else I can assist you with?"""
 
 # Export all tools as a list for easy import
 tools = [
-    search_knowledge_base,
+    # search_knowledge_base,
     search_vector_knowledge_base,
     get_order_status,
     initiate_return,
